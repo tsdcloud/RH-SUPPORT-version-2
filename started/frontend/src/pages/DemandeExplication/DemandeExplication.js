@@ -1,11 +1,12 @@
 // [pmpro_levels]
 
-import { Table, Modal, Dropdown } from 'antd'
+import { Table, Modal, Dropdown, Drawer, Space, Button } from 'antd'
 import React, {useEffect, useState, useMemo} from 'react'
 import { useLocation, Link } from 'react-router-dom';
-import { PlusIcon, EllipsisHorizontalIcon, EyeIcon } from '@heroicons/react/24/solid'
+import { PlusIcon, EllipsisHorizontalIcon, EyeIcon, ChatBubbleLeftRightIcon, PaperAirplaneIcon } from '@heroicons/react/24/solid'
 import Tab from '../../components/Tab/Tab';
-
+// import DetailForm from '../../components/AllForms/ExplanationRequest/DetailForm'
+// import ResponseForm from '../../components/ExplanationRequest/ResponseForm.jsx'
 function DemandeExplication() {
 
 
@@ -13,9 +14,11 @@ function DemandeExplication() {
         init: "initier_de",
         upload: "upload_de"
     }
+
     const [count, setCount] = useState(0)
     const[isOpenned, setIsOpenned]=useState(false);
     const [data, setData] = useState([]);
+    const [actualRequest, setActualRequest] = useState({})
     const [dataSource, setDataSource] = useState([]);
     const _USER = localStorage.getItem('user');
     const userEntity = JSON.parse(localStorage.getItem('user'))?.entity[0].id;
@@ -23,7 +26,6 @@ function DemandeExplication() {
     const [receiverLoading, setReceiverLoading] = useState(true);
     const [motifLoading, setMotifLoading] = useState(true);
     const [typeDE, setTypeDE] = useState(TYPE_DE.init)
-
     const [motifs, setMotifs] = useState([])
     
 
@@ -35,6 +37,26 @@ function DemandeExplication() {
     const [description, setDescription] = useState('');
 
 
+    const [open, setOpen] = useState(false);
+
+    const showDrawer = () => {
+        setOpen(true);
+    };
+    const onClose = () => {
+        setOpen(false);
+    };
+
+    const handleSetActualRequest=(id)=>{
+        const actualRequest = dataSource.filter(data=>{
+            return data.uuid == id
+        });
+        setActualRequest(...actualRequest);
+    }
+
+    const handleOpenResponse=(id)=>{
+        handleSetActualRequest(id)
+        setOpen(true)
+    }
 
     const location = useLocation();
     const handleTabClick = (path) => {
@@ -43,43 +65,7 @@ function DemandeExplication() {
         // console.log(location.pathname);
     };
 
-    const items = [
-        {
-          key: '1',
-          label: (
-            <Link target="_blank" rel="noopener noreferrer" href="https://www.antgroup.com" className="flex items-center space-x-2">
-                <EyeIcon className="h-4 w-4 text-gray-500" />
-                <span>
-                    Details
-                </span>
-            </Link>
-          ),
-        },
-        {
-          key: '2',
-          label: (
-            <a target="_blank" rel="noopener noreferrer" href="https://www.aliyun.com">
-              Répondre
-            </a>
-          ),
-        },
-        {
-          key: '3',
-          label: (
-            <a target="_blank" rel="noopener noreferrer" href="https://www.luohanacademy.com">
-              Faire appel
-            </a>
-          ),
-        },
-        {
-          key: '4',
-          label: (
-            <a target="_blank" rel="noopener noreferrer" href="https://www.luohanacademy.com">
-              Proposition de sanction
-            </a>
-          ),
-        }
-    ];
+    
 
     const columns = [
           {
@@ -111,16 +97,66 @@ function DemandeExplication() {
             // })
           },
           {
+            title: 'Initiateur',
+            dataIndex: 'employer_initiateur',
+            key: 'employer_initiateur',
+            // render:((text)=>{
+            //     let destinataire = receivers.filter(receiver=>receiver.id == text)
+            //     console.log(receivers)
+            //     return <>{destinataire}</>
+            // })
+          },
+          {
             title: 'Date initiation',
             dataIndex: 'date_init',
             key: 'date_init',
           },
           {
             title: 'Actions',
-            render:()=>(
-                <Dropdown
+            render:(record, text)=>{
+                const items = [
+                    {
+                      key: '1',
+                      label: (
+                        <Link to={'#'} className='flex items-center'>
+                            <EyeIcon className="h-3 w-3 text-gray-500" />
+                            <span>
+                                Details
+                            </span>
+                        </Link>
+                      ),
+                    },
+                    {
+                      key: '2',
+                      label: (
+                        <Link onClick={()=>handleOpenResponse(record.uuid)} className='flex items-center'>
+                            <ChatBubbleLeftRightIcon  className="h-3 w-3 text-gray-500" />
+                          Répondre
+                        </Link>
+                      ),
+                    },
+                    {
+                      key: '3',
+                      label: (
+                        <a target="_blank" rel="noopener noreferrer" href="https://www.luohanacademy.com">
+                          Faire appel
+                        </a>
+                      ),
+                    },
+                    {
+                      key: '4',
+                      label: (
+                        <a target="_blank" rel="noopener noreferrer" href="https://www.luohanacademy.com">
+                          Proposition de sanction
+                        </a>
+                      ),
+                    }
+                ];
+
+                // console.log(record)
+                return <Dropdown
                     menu={{
-                    items,
+                        items,
                     }}
                     placement="bottomRight"
                 >
@@ -129,7 +165,7 @@ function DemandeExplication() {
                     </div>
                    {/* <p> more </p> */}
                 </Dropdown>
-            )
+            }
             // dataIndex: 'statut',
             // key: 'statut',
           },
@@ -395,7 +431,7 @@ function DemandeExplication() {
                     </button>
                 </div>
             </div>
-
+            {/* Demande explication content */}
             <div className='p-4'>
                 <ul id="tabs" className="inline-flex pt-2 px-1 w-full border-b space-x-2">
                     {/* <p className='flex items-center'>Logo</p> */}
@@ -457,6 +493,80 @@ function DemandeExplication() {
                       }}
                 />
             </div>
+
+            {/* Drawer */}
+            <Drawer
+                title="Demande d'explication"
+                placement="bottom"
+                width={1000}
+                height={500}
+                onClose={onClose}
+                open={open}
+                extra={
+                <Space>
+                    <Button onClick={onClose}>Cancel</Button>
+                </Space>
+                }
+            >
+                <div className="flex p-2 h-full relative">
+                    <div className="w-1/2 h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-gray-100 p-2 space-y-3">
+                        <>
+                            <label className="font-bold text-xs">Numero de reférence :</label>
+                            <div className="p-2 bg-gray-50 rounded-lg">
+                                <p className="text-gray-800">{actualRequest.code_de}</p>
+                            </div>
+                        </>
+                        <>
+                            <label className="font-bold text-xs">Motif :</label>
+                            <div className="p-2 w-full bg-gray-50 rounded-lg">
+                                <p className="text-gray-800">{motifs.find(motif => motif.uuid === actualRequest.motif)?.nom}</p>
+                            </div>
+                        </>
+                        <>
+                            <label className="font-bold text-xs">Initiateur :</label>
+                            <div className="p-2 w-full bg-gray-50 rounded-lg">
+                                <p className="text-gray-800">{actualRequest.employer_initiateur}</p>
+                            </div>
+                        </>
+                        <>
+                            <label className="font-bold text-xs">Destinataire :</label>
+                            <div className="p-2 w-full bg-gray-50 rounded-lg">
+                                <p className="text-gray-800">{actualRequest.employer_recepteur}</p>
+                            </div>
+                        </>
+                        <>
+                            <label className="font-bold text-xs">Description :</label>
+                            <textarea className="p-2 w-full bg-gray-50 rounded-lg"
+                                value={actualRequest.description}
+                                disabled
+                                rows="10"
+                            >
+                            </textarea>
+                        </>
+                    </div>
+                    <div className="w-1/2 h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-gray-100 p-2 ">
+                            
+                    <div>
+                        {/* <h3 className='text-2xl font-semibold'>Reponse</h3> */}
+                        <div>
+                            <form className='flex flex-col space-y-3'>
+                            <label htmlFor="response_file">Justif. :</label>
+                            <input type="file" id='response_file' className='p-2 border-[1px] border-gray-400 rounded-lg'/>
+
+                            {/* Description */}
+                            <label htmlFor="response_description">Description. :</label>
+                            <textarea name="" id="response_description" cols="30" rows="5" className='p-2 border-[1px] border-gray-400 rounded-lg' placeholder="Votre reponse a votre demande d'explication...">
+                            </textarea>
+                            <button type='submit' className='flex items-center px-2 py-1 shadow-sm bg-blue-500 rounded-lg text-white'>
+                                <PaperAirplaneIcon class="h-6 w-6 text-white" />
+                                Envoyer la reponse
+                            </button>
+                            </form>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            </Drawer>
         </div>
     </>
   )

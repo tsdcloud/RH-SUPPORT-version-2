@@ -1,18 +1,32 @@
+import json
 from rest_framework.views import APIView, status
 from rest_framework.response import Response
 from django.http import Http404
 from .serializers import DemandeSerializerDetail, DemandeExplicationSerializer
 from .models import DemandeExplication
-
+import requests, os
+from dotenv import load_dotenv
+load_dotenv()
 
 class DemandeListView(APIView):
     """
     List all Explanation requests, Create a new EXplanation request, Update a Explanation request and Delete a Explanation request
     """
     def get(self, request,  format=None):
-        demande = DemandeExplication.objects.filter(active=True)
-        serializer = DemandeExplicationSerializer(demande, many=True)
-        return Response(serializer.data)
+        demandes = DemandeExplication.objects.filter(active=True)
+        demande_list = []
+        for demande in demandes:
+            headers = {'Content-Type': 'application/json'}
+            reponse = requests.request("GET", str(os.environ.get("DE_API"))+"/reponse/"+demande.uuid)
+            demande_1 = dict()
+            for key in DemandeExplication._meta.fields:
+                try:
+                    demande_1[key.attname] = getattr(demande, key.attname)
+                except KeyError:
+                    pass
+            demande_1["reponse"]= reponse
+            demande_list.append(demande_1)
+        return Response(demande_list)
     
     def post(self, request, format=None):
         print("Body :",request.body)

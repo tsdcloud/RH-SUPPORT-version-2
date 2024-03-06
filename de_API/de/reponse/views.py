@@ -31,7 +31,7 @@ class ResponseDetail(APIView):
             motif = Reponse.objects.get(id_de=pk, active=True)
             return motif
         except Reponse.DoesNotExist:
-            raise Http404
+            return []
         
 
     def get(self, request, pk,  format=None):
