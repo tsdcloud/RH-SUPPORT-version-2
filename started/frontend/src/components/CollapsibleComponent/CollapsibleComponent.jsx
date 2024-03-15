@@ -16,7 +16,7 @@ const CollapsibleComponent = ({ children, title, className }) => {
       
       </div>
       {/* <div className={`${className} overflow-y-auto m-y-2 ${collapseIsCollapsed ? 'hidden' : 'block'} max-h-96 `} style={{ maxHeight: '300px' }}> */}
-      <div className={`${className} overflow-y-auto m-y-2 ${collapseIsCollapsed ? 'hidden' : 'block'} `}>
+      <div className={`${className} overflow-y-auto hover:overflow-y-scroll m-y-2 ${collapseIsCollapsed ? 'hidden' : 'block'} `} style={{ maxHeight: '300px' }}>
         {children}
       </div>
     </div>

@@ -55,7 +55,8 @@ function ReponseForm(props) {
 
         const response = await fetch(url, RequestInfo);
         let res = response.json();
-        await props.onSave();
+        console.log(res);
+        await props.onSave(1);
         if(res.status === 201){
             // handleFetchAllDE();
             // setIsOpenned(false);

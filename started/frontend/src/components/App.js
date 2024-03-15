@@ -2,11 +2,14 @@ import React, { Component, useContext, useEffect } from "react";
 import './index.css'
 import { render } from "react-dom";
 import {BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+
 import ProfileBar from "./profileBar/ProfileBar";
 import DemandeExplication from "../pages/DemandeExplication/DemandeExplication";
 import TopBar from "./topBar/TopBar";
 import AuthProvider from "../context/AuthContext";
 import { AUTHCONTEXT } from "../context/AuthContext";
+
+
 export default function App() {
   // const { entities } = useContext(AUTHCONTEXT);
   useEffect(()=>{

@@ -84,7 +84,8 @@ function DemandeExplication() {
         setOpen(true)
     }
 
-    const handleOnReponseSaved=()=>{
+    const handleOnReponseSaved=(id)=>{
+        console.log(id)
         alert("Response sent");
         handleFetchAllDE();
         // handleSetActualRequest(id)
@@ -150,7 +151,7 @@ function DemandeExplication() {
     ];
 
     /**
-     * Handle get all Demande Explicatio
+     * Handle get all Demande Explication
      */
     const handleFetchAllDE=async ()=>{
         let headersList = {
@@ -163,6 +164,7 @@ function DemandeExplication() {
        });
        
        let res = await response.json();
+       console.log(res);
        if(res.status === 200){
         setData(res.results);
         setDataSource(res.results);
@@ -272,6 +274,7 @@ function DemandeExplication() {
         handleFetchAllDE(); 
         handleGetMotifs();
         const explanations = data.filter(item=> item.reponse.length == 0);
+        console.log(explanations);
         setDataSource(explanations);
     }, []);
 
@@ -491,7 +494,7 @@ function DemandeExplication() {
             >
 
                 {/* Main wrapper */}
-                <div className="h-full w-full overflow-hidden flex space-x-2">
+                <div className="h-full w-full overflow-y-auto hover:overflow-y-scroll flex space-x-2">
                     {/* DE detail area */}
                     <div className="h-full w-1/2 overflow-y-auto p-2">
                         {/*Header section  */}
@@ -531,19 +534,13 @@ function DemandeExplication() {
                     <span className="h-full w-[1px] bg-gray-200"></span>
                     
                     {/* List and Forms section */}
-                    <div className="h-full w-1/2 overflow-y-auto p-2 space-y-2">
+                    <div className="h-full w-1/2 overflow-y-auto hover:overflow-y-scroll p-2 space-y-2">
 
                         {/* Reponse collapse */}
                         <CollapsibleComponent 
                         title={`Toutes les réponses (${
                             dataSource
-                            .filter(data=>{
-                                return data.uuid == actualRequest.uuid
-                            })
-                            .filter(item => {
-                                return item.reponse.length > 0
-                            })
-                            .length
+                            .filter(data=>data.uuid == actualRequest.uuid)[0]?.reponse.length
                         })`} 
                         className="m-y-2"
                         >

@@ -28,30 +28,33 @@ class ResponseDetail(APIView):
     """
     def get_object(self, pk):
         try:
-            motif = Reponse.objects.get(id_de=pk, active=True)
-            return motif
+            reponse = Reponse.objects.filter(id_de=pk, active=True)
+            print(reponse)
+            return reponse
         except Reponse.DoesNotExist:
             return []
         
 
     def get(self, request, pk,  format=None):
-        response = self.get_object(pk)
-        serializer = ResponseSerializerDetail(response, data=request.data)
-        if serializer.is_valid():
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # reponse = self.get_object(pk)
+        reponse = Reponse.objects.filter(id_de=pk, active=True)
+        # return Response(ResponseSerializerDetail(reponse, many=True).data)
+        print("REPONSE :", reponse)
+        serializer = ResponseSerializerDetail(reponse, many=True)
+        return Response(serializer.data)
+        # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     
     def put(self, request, pk, format=None):
-        response = self.get_object(pk)
-        serializer = ResponseSerializer(response, data=request.data)
+        reponse = self.get_object(pk)
+        serializer = ResponseSerializer(reponse, data=request.data, many=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def delete(self, request, pk, format=None):
-        response = self.get_object(pk)
-        response.active = False
-        response.save()
+        reponse = self.get_object(pk)
+        reponse.active = False
+        reponse.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
