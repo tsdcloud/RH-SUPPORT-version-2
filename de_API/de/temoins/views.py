@@ -28,7 +28,7 @@ class TemoinsDetail(APIView):
     """
     def get_object(self, pk):
         try:
-            motif = Temoins.objects.get(uuid=pk)
+            motif = Temoins.objects.get(id_de=pk)
             return motif
         except Temoins.DoesNotExist:
             raise Http404

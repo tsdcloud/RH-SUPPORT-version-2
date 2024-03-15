@@ -28,8 +28,8 @@ class PropositionDetail(APIView):
     """
     def get_object(self, pk):
         try:
-            motif = PropositionSanction.objects.get(id_de=pk, active=True)
-            return motif
+            proposition = PropositionSanction.objects.get(id_de=pk, active=True)
+            return proposition
         except PropositionSanction.DoesNotExist:
             raise Http404
         

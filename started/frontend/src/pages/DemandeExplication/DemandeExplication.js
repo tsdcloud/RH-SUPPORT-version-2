@@ -1,19 +1,38 @@
-// [pmpro_levels]
-
-import { Table, Modal, Dropdown, Drawer, Space, Button } from 'antd'
+import { Table, Modal, Dropdown, Drawer, Space, Button, Collapse } from 'antd'
 import React, {useEffect, useState, useMemo} from 'react'
 import { useLocation, Link } from 'react-router-dom';
-import { PlusIcon, EllipsisHorizontalIcon, EyeIcon, ChatBubbleLeftRightIcon, PaperAirplaneIcon } from '@heroicons/react/24/solid'
+import { PlusIcon, EllipsisHorizontalIcon,UserPlusIcon, ShieldExclamationIcon, ReceiptRefundIcon, ArrowUturnRightIcon } from '@heroicons/react/24/outline'
 import Tab from '../../components/Tab/Tab';
-// import DetailForm from '../../components/AllForms/ExplanationRequest/DetailForm'
-// import ResponseForm from '../../components/ExplanationRequest/ResponseForm.jsx'
+import ReponseForm from '../../components/Reponse/ReponseForm.jsx';
+import FileComponent from '../../components/FileComponent/FileComponent.jsx';
+import ExplicationDetails from '../../components/ExplicationDetails/ExplicationDetails.jsx';
+import CollapsibleComponent from '../../components/CollapsibleComponent/CollapsibleComponent.jsx';
+import DetailCard from '../../components/DetailCard/DetailCard.jsx';
+
+
+
+/**
+ * On this page, the user should be able to get the following information :
+ * 1- All the requests for explanation initiated
+ * 2- All the requests for explanation received
+ * 3- All the requests answered
+ * 4- All the requests awaiting for propositions
+ * 5- All the 
+ */
+
+const TYPE_DE = {
+    init: "initier_de",
+    upload: "upload_de"
+}
+
+// const REQUEST_STEP = {
+//     all_demande,
+//     request_intiated,
+//     request_received
+// }
+
+
 function DemandeExplication() {
-
-
-    const TYPE_DE = {
-        init: "initier_de",
-        upload: "upload_de"
-    }
 
     const [count, setCount] = useState(0)
     const[isOpenned, setIsOpenned]=useState(false);
@@ -26,9 +45,11 @@ function DemandeExplication() {
     const [receiverLoading, setReceiverLoading] = useState(true);
     const [motifLoading, setMotifLoading] = useState(true);
     const [typeDE, setTypeDE] = useState(TYPE_DE.init)
-    const [motifs, setMotifs] = useState([])
-    
+    const [motifs, setMotifs] = useState([]);
 
+    const [isCollapsed, setIsCollapsed] = useState(false);
+
+    
     // Form values
     const [initiator, setInitiator] = useState(null);
     const [receivers, setReceivers] = useState([]);
@@ -37,11 +58,16 @@ function DemandeExplication() {
     const [description, setDescription] = useState('');
 
 
+
+    const [reponseFormIsOpenned, setReponseFormIsOpenned] = useState(false);
+    const [temoinFormIsOpenned, setTemoinFormIsOpenned] = useState(false);
+
     const [open, setOpen] = useState(false);
 
     const showDrawer = () => {
         setOpen(true);
     };
+
     const onClose = () => {
         setOpen(false);
     };
@@ -58,14 +84,20 @@ function DemandeExplication() {
         setOpen(true)
     }
 
+    const handleOnReponseSaved=()=>{
+        alert("Response sent");
+        handleFetchAllDE();
+        // handleSetActualRequest(id)
+        setOpen(false)
+    }
+
     const location = useLocation();
+
     const handleTabClick = (path) => {
         // setActiveTab(tabName);
         setPath(path)
         // console.log(location.pathname);
     };
-
-    
 
     const columns = [
           {
@@ -113,61 +145,7 @@ function DemandeExplication() {
           },
           {
             title: 'Actions',
-            render:(record, text)=>{
-                const items = [
-                    {
-                      key: '1',
-                      label: (
-                        <Link to={'#'} className='flex items-center'>
-                            <EyeIcon className="h-3 w-3 text-gray-500" />
-                            <span>
-                                Details
-                            </span>
-                        </Link>
-                      ),
-                    },
-                    {
-                      key: '2',
-                      label: (
-                        <Link onClick={()=>handleOpenResponse(record.uuid)} className='flex items-center'>
-                            <ChatBubbleLeftRightIcon  className="h-3 w-3 text-gray-500" />
-                          Répondre
-                        </Link>
-                      ),
-                    },
-                    {
-                      key: '3',
-                      label: (
-                        <a target="_blank" rel="noopener noreferrer" href="https://www.luohanacademy.com">
-                          Faire appel
-                        </a>
-                      ),
-                    },
-                    {
-                      key: '4',
-                      label: (
-                        <a target="_blank" rel="noopener noreferrer" href="https://www.luohanacademy.com">
-                          Proposition de sanction
-                        </a>
-                      ),
-                    }
-                ];
-
-                // console.log(record)
-                return <Dropdown
-                    menu={{
-                        items,
-                    }}
-                    placement="bottomRight"
-                >
-                    <div>
-                        <EllipsisHorizontalIcon class="h-8 w-8 text-gray-500" />
-                    </div>
-                   {/* <p> more </p> */}
-                </Dropdown>
-            }
-            // dataIndex: 'statut',
-            // key: 'statut',
+            render:(record, text)=><EllipsisHorizontalIcon onClick={()=>handleOpenResponse(record.uuid)} className="h-8 w-8 text-gray-500 cursor-pointer" />
           },
     ];
 
@@ -189,7 +167,7 @@ function DemandeExplication() {
         setData(res.results);
         setDataSource(res.results);
        }
-}
+    }
 
     /**
      * Returns the motifs for a given entity
@@ -213,7 +191,6 @@ function DemandeExplication() {
             setMotifs(data);
         }
     }
-
 
     /**
      * Handle get all employees
@@ -294,8 +271,11 @@ function DemandeExplication() {
         // setReceivers(entitiesEmployees);
         handleFetchAllDE(); 
         handleGetMotifs();
-
+        const explanations = data.filter(item=> item.reponse.length == 0);
+        setDataSource(explanations);
     }, []);
+
+    
     
   return (
     <>
@@ -431,32 +411,42 @@ function DemandeExplication() {
                     </button>
                 </div>
             </div>
+
             {/* Demande explication content */}
             <div className='p-4'>
                 <ul id="tabs" className="inline-flex pt-2 px-1 w-full border-b space-x-2">
                     {/* <p className='flex items-center'>Logo</p> */}
                     <Tab 
-                    title="Toute les demandes d'explication"
-                    id="default-tab" 
-                    // to="all" 
-                    number={dataSource.length}
-                    onClick={() => handleTabClick("explanation")} 
-                    className={`bg-white px-4 text-gray-800 font-semibold py-2 rounded-t border-t border-r border-l -mb-px ${
-                        path === 'explanation' ? 'border-t border-r border-l -mb-px bg-white' : 'bg-gray-500 border-b'
-                    }`}
+                        title="Toute les demandes d'explication"
+                        id="default-tab" 
+                        // to="all" 
+                        number={data.length}
+                        onClick={() =>{ 
+                            setDataSource(data)
+                            handleTabClick("explanation");
+                        }} 
+                        className={`bg-white px-4 text-gray-800 font-semibold py-2 rounded-t border-t border-r border-l -mb-px ${
+                            path === 'explanation' ? 'border-t border-r border-l -mb-px bg-white' : 'bg-gray-500 border-b'
+                        }`}
                     />
                     <Tab 
-                    title="Repondue" 
-                    id="default-tab" 
-                    // to="answered" 
-                    onClick={() => handleTabClick("answered")} 
+                    title="Repondue"
+                    // id="default-tab" 
+                    // to="answered"
+                    number = {data.filter(item => item.reponse.length > 0).length}
+                    onClick={() => {
+                        const explanations = data.filter(item => item.reponse.length > 0);
+                        setDataSource(explanations);
+                        console.log(dataSource);
+                        handleTabClick("answered")
+                    }} 
                     className={`bg-white px-4 text-gray-800 font-semibold py-2 rounded-t border-t border-r border-l -mb-px ${
                         path === ('answered') ? 'border-t border-r border-l -mb-px bg-white' : 'bg-gray-500 border-b'
                     }`}
                     />
                     <Tab 
                     title="En attente de témoins" 
-                    id="default-tab" 
+                    // id="default-tab" 
                     // to="answered" 
                     onClick={() => handleTabClick("witness")} 
                     className={`bg-white px-4 text-gray-800 font-semibold py-2 rounded-t border-t border-r border-l -mb-px ${
@@ -465,22 +455,13 @@ function DemandeExplication() {
                     />
                     <Tab 
                     title="En attente de sanction" 
-                    id="default-tab" 
+                    // id="default-tab" 
                     // to="answered" 
                     onClick={() => handleTabClick("sanction")} 
                     className={`bg-white px-4 text-gray-800 font-semibold py-2 rounded-t border-t border-r border-l -mb-px ${
                         path === ('sanction') ? 'border-t border-r border-l -mb-px bg-white' : 'bg-gray-500 border-b'
                     }`}
                     />
-                    {/* <Tab 
-                    title="Requette encours" 
-                    id="default-tab" 
-                    // to="answered" 
-                    onClick={() => handleTabClick("requests")} 
-                    className={`bg-white px-4 text-gray-800 font-semibold py-2 rounded-t border-t border-r border-l -mb-px ${
-                        path === ('requests') ? 'border-t border-r border-l -mb-px bg-white' : 'bg-gray-500 border-b'
-                    }`}
-                    /> */}
                 </ul>
                 <Table 
                     dataSource={dataSource}
@@ -499,74 +480,228 @@ function DemandeExplication() {
                 title="Demande d'explication"
                 placement="bottom"
                 width={1000}
-                height={500}
+                height={600}
                 onClose={onClose}
                 open={open}
                 extra={
                 <Space>
-                    <Button onClick={onClose}>Cancel</Button>
+                    <Button onClick={onClose} className="">Cancel</Button>
                 </Space>
                 }
             >
-                <div className="flex p-2 h-full relative">
-                    <div className="w-1/2 h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-gray-100 p-2 space-y-3">
-                        <>
-                            <label className="font-bold text-xs">Numero de reférence :</label>
-                            <div className="p-2 bg-gray-50 rounded-lg">
-                                <p className="text-gray-800">{actualRequest.code_de}</p>
-                            </div>
-                        </>
-                        <>
-                            <label className="font-bold text-xs">Motif :</label>
-                            <div className="p-2 w-full bg-gray-50 rounded-lg">
-                                <p className="text-gray-800">{motifs.find(motif => motif.uuid === actualRequest.motif)?.nom}</p>
-                            </div>
-                        </>
-                        <>
-                            <label className="font-bold text-xs">Initiateur :</label>
-                            <div className="p-2 w-full bg-gray-50 rounded-lg">
-                                <p className="text-gray-800">{actualRequest.employer_initiateur}</p>
-                            </div>
-                        </>
-                        <>
-                            <label className="font-bold text-xs">Destinataire :</label>
-                            <div className="p-2 w-full bg-gray-50 rounded-lg">
-                                <p className="text-gray-800">{actualRequest.employer_recepteur}</p>
-                            </div>
-                        </>
-                        <>
-                            <label className="font-bold text-xs">Description :</label>
-                            <textarea className="p-2 w-full bg-gray-50 rounded-lg"
-                                value={actualRequest.description}
-                                disabled
-                                rows="10"
-                            >
-                            </textarea>
-                        </>
-                    </div>
-                    <div className="w-1/2 h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-gray-100 p-2 ">
-                            
-                    <div>
-                        {/* <h3 className='text-2xl font-semibold'>Reponse</h3> */}
-                        <div>
-                            <form className='flex flex-col space-y-3'>
-                            <label htmlFor="response_file">Justif. :</label>
-                            <input type="file" id='response_file' className='p-2 border-[1px] border-gray-400 rounded-lg'/>
 
-                            {/* Description */}
-                            <label htmlFor="response_description">Description. :</label>
-                            <textarea name="" id="response_description" cols="30" rows="5" className='p-2 border-[1px] border-gray-400 rounded-lg' placeholder="Votre reponse a votre demande d'explication...">
-                            </textarea>
-                            <button type='submit' className='flex items-center px-2 py-1 shadow-sm bg-blue-500 rounded-lg text-white'>
-                                <PaperAirplaneIcon class="h-6 w-6 text-white" />
-                                Envoyer la reponse
-                            </button>
-                            </form>
+                {/* Main wrapper */}
+                <div className="h-full w-full overflow-hidden flex space-x-2">
+                    {/* DE detail area */}
+                    <div className="h-full w-1/2 overflow-y-auto p-2">
+                        {/*Header section  */}
+                        <div className="flex items-center p-2 shadow-sm bg-white rounded-md">
+                            {/* <h4 className="text-lg font-semibold">Demande D'explication</h4> */}
+                            <div className="flex justify-between items-center space-x-3">
+                                <button className="text-blue-500 flex items-center space-x-2">
+                                    Repondre{" "}
+                                    <ArrowUturnRightIcon class="h-3 w-3 text-blue-500" />
+                                </button>
+                                <button className="text-yellow-500 flex items-center space-x-2">
+                                    Interpeler un témoins{" "}
+                                    <UserPlusIcon class="h-3 w-3 text-yellow-500" />
+                                </button>
+                                <button className="text-red-500 flex items-center space-x-2">
+                                    Proposer une sanction{" "}
+                                    <ShieldExclamationIcon class="h-3 w-3 text-red-500" />
+                                </button>
+                                <button className="text-green-500 flex items-center space-x-2">
+                                    Faire une requette{" "}
+                                    <ReceiptRefundIcon class="h-3 w-3 text-green-500" />
+                                </button>
+                            </div>
                         </div>
+
+                        {/* Content section */}
+                        <div className="shadow-sm p-2 mt-3 rounded-sm">
+                            <ExplicationDetails
+                                code={actualRequest.code_de}
+                                dateInit={actualRequest.date_init}
+                                initiateur={actualRequest.employer_initiateur}
+                                motif={motifs.find(motif => motif.uuid === actualRequest.motif)?.nom}
+                                description={actualRequest.description}
+                            />
                         </div>
+                    </div>
+                    <span className="h-full w-[1px] bg-gray-200"></span>
+                    
+                    {/* List and Forms section */}
+                    <div className="h-full w-1/2 overflow-y-auto p-2 space-y-2">
+
+                        {/* Reponse collapse */}
+                        <CollapsibleComponent 
+                        title={`Toutes les réponses (${
+                            dataSource
+                            .filter(data=>{
+                                return data.uuid == actualRequest.uuid
+                            })
+                            .filter(item => {
+                                return item.reponse.length > 0
+                            })
+                            .length
+                        })`} 
+                        className="m-y-2"
+                        >
+                            {actualRequest.reponse?.map((data)=>
+                                    (
+                                        dataSource
+                                        .filter(data=>{
+                                            return data.uuid == actualRequest.uuid
+                                        })
+                                        .filter(item => {
+                                            return item.reponse.length > 0
+                                        })
+                                        .length > 0 ?
+                                        <div>
+                                            <DetailCard
+                                                borderColor={`border-l-blue-500 my-1`}
+                                                name={data.id_employe}
+                                                description={data.commentaire_reponse}
+                                                date={data.date_init}
+                                            /> 
+                                        </div>
+                                        :
+                                        <div className="border-[1px] p-2 border-gray-100">
+                                            <p className="italics">Aucune réponse</p>
+                                        </div>
+                                    
+                                    )
+                                )
+                            }
+                        </CollapsibleComponent>
+                        <div>
+                            {
+                                reponseFormIsOpenned && 
+                                <ReponseForm 
+                                    onSave={handleOnReponseSaved}
+                                    demande={actualRequest.uuid}
+                                />
+                            }
+                        </div>
+                        <div className="flex justify-end items-center space-x-2 mt-2">
+                            {
+                                reponseFormIsOpenned?
+                                    <button className="px-2 py-1 bg-red-500 text-xs text-white rounded-md" onClick={()=>setReponseFormIsOpenned(false)}>Annuler</button>
+                                :
+                                    <button className="px-2 py-1 bg-blue-500 text-xs text-white rounded-md" onClick={()=>setReponseFormIsOpenned(true)}>Repondre</button>
+                            }
+                        </div>
+
+                        {/* Toutes les interpélations */}
+                        <CollapsibleComponent 
+                        title={`Toutes les interpélations (${
+                            dataSource
+                            .filter(data=>{
+                                return data.uuid == actualRequest.uuid
+                            })
+                            .filter(item => {
+                                return item.temoins.length > 0
+                            })
+                            .length
+                        })`} 
+                        className="m-y-2"
+                        >
+                            {actualRequest.temoins?.map((data)=>
+                                    (
+                                        dataSource
+                                        .filter(data=>{
+                                            return data.uuid == actualRequest.uuid
+                                        })
+                                        .filter(item => {
+                                            return item.temoins.length > 0
+                                        })
+                                        .length > 0 ?
+                                        <DetailCard
+                                            borderColor={`border-l-blue-500 my-1`}
+                                            name={data.id_employe}
+                                            description={data.commentaire_reponse}
+                                            date={data.date_init}
+                                        /> :
+                                        <div className="border-[1px] p-2 border-gray-100">
+                                            <p className="italics">Aucune réponse</p>
+                                        </div>
+                                    
+                                    )
+                            )
+                            }
+                        </CollapsibleComponent>
+                        <div>
+                            {
+                                temoinFormIsOpenned && 
+                                <div className="">
+                                    <select 
+                                        className={receiverLoading?'border-[1px] bg-gray-100 border-gray-100 rounded-lg p-2 w-full focus:outline-0' :'border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0'} 
+                                        disabled={receiverLoading}
+                                        value={receiver}
+                                        onChange={e=>setReceiver(e.target.value)}
+                                        >
+                                        <option value="">Témoins</option>
+                                        {
+                                            receivers.map((users)=>(
+                                                <option key={users.user.id} value={users.user.id}>{`${users.user.member.first_name} ${users.user.member.last_name}`}</option>
+                                            ))
+                                        }
+                                    </select>
+                                </div>
+                            }
+                        </div>
+                        <div className="flex justify-end items-center space-x-2 mt-2">
+                            {
+                                temoinFormIsOpenned?
+                                    <button className="px-2 py-1 bg-red-500 text-xs text-white rounded-md" onClick={()=>setTemoinFormIsOpenned(false)}>Annuler</button>
+                                :
+                                    <button className="px-2 py-1 bg-blue-500 text-xs text-white rounded-md" onClick={()=>setTemoinFormIsOpenned(true)}>Interpeler un témoin</button>
+                            }
+                        </div>
+
+                        {/* Toutes les sanctions */}
+                        <CollapsibleComponent 
+                        title={`Toutes les sanctions (${
+                            dataSource
+                            .filter(data=>{
+                                return data.uuid == actualRequest.uuid
+                            })
+                            .filter(item => {
+                                return item.temoins.length > 0
+                            })
+                            .length
+                        })`} 
+                        className="m-y-2"
+                        >
+                            {actualRequest.propositions?.map((data)=>
+                                    (
+                                        dataSource
+                                        .filter(data=>{
+                                            return data.uuid == actualRequest.uuid
+                                        })
+                                        .filter(item => {
+                                            return item.propositions.length > 0
+                                        })
+                                        .length > 0 ?
+                                        <DetailCard
+                                            borderColor={`border-l-blue-500 my-1`}
+                                            name={data.id_employe}
+                                            description={data.commentaire_reponse}
+                                            date={data.date_init}
+                                        /> :
+                                        <div className="border-[1px] p-2 border-gray-100">
+                                            <p className="italics">Aucune réponse</p>
+                                        </div>
+                                    
+                                    )
+                            )
+                            }
+                        </CollapsibleComponent>
                     </div>
                 </div>
             </Drawer>
+
+
         </div>
     </>
   )

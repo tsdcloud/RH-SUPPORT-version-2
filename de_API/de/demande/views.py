@@ -12,21 +12,56 @@ class DemandeListView(APIView):
     """
     List all Explanation requests, Create a new EXplanation request, Update a Explanation request and Delete a Explanation request
     """
-    def get(self, request,  format=None):
+    def get(self, request, format=None):
         demandes = DemandeExplication.objects.filter(active=True)
-        demande_list = []
+        
         for demande in demandes:
             headers = {'Content-Type': 'application/json'}
-            reponse = requests.request("GET", str(os.environ.get("DE_API"))+"/reponse/"+demande.uuid)
-            demande_1 = dict()
-            for key in DemandeExplication._meta.fields:
-                try:
-                    demande_1[key.attname] = getattr(demande, key.attname)
-                except KeyError:
-                    pass
-            demande_1["reponse"]= reponse
-            demande_list.append(demande_1)
-        return Response(demande_list)
+
+            response = requests.get(str(os.environ.get("DE_API")) + "/reponse/" + demande.uuid)
+            temoins = requests.get(str(os.environ.get("DE_API")) + "/temoins/" + demande.uuid)
+            proposition = requests.get(str(os.environ.get("DE_API")) + "/proposition/" + demande.uuid)
+            
+            if response.status_code == 200:
+                reponse_data = response.json()
+                demande.reponse = [reponse_data] if reponse_data else []  # Append data or empty list to reponse attribute
+            else:
+                demande.reponse = []  # Set reponse attribute to empty list if no data
+            
+            if temoins.status_code == 200:
+                temoins_data = temoins.json()
+                demande.temoins = [temoins_data] if temoins_data else []  # Append data or empty list to temoins attribute
+            else:
+                demande.temoins = []  # Set temoins attribute to empty list if no data
+            
+            if proposition.status_code == 200:
+                proposition_data = proposition.json()
+                demande.propositions = [proposition_data] if proposition_data else []  # Append data or empty list to reponse attribute
+            else:
+                demande.propositions = []  # Set reponse attribute to empty list if no data
+        
+        serializer = DemandeExplicationSerializer(demandes, many=True)
+        
+        return Response(serializer.data)
+    
+    # def get(self, request,  format=None):
+    #     demandes = DemandeExplication.objects.filter(active=True)
+    #     demande_list = []
+    #     for demande in demandes:
+    #         headers = {'Content-Type': 'application/json'}
+    #         reponse = requests.request("GET", str(os.environ.get("DE_API"))+"/reponse/"+demande.uuid)
+    #         demande_1 = dict()
+    #         for key in DemandeExplication._meta.fields:
+    #             try:
+    #                 demande_1[key.attname] = getattr(demande, key.attname)
+    #             except KeyError:
+    #                 pass
+    #         if reponse == {}:
+    #             demande_1["reponse"]= []
+    #         else:
+    #             demande_1["reponse"]= reponse
+    #         demande_list.append(demande_1)
+    #     return Response(demande_list)
     
     def post(self, request, format=None):
         print("Body :",request.body)
