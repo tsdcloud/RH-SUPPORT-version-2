@@ -63,6 +63,9 @@ def f_login(request):
         if form.is_valid():
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
+            # next = form.cleaned_data.get('next', None)
+            # if not next:
+            #     next = request.data.get('next', None)
             res = connect(email=email, password=password)
             if res.get('detail', 0) != 0:
                 messages.error(request, res['detail'])
@@ -99,6 +102,10 @@ def f_login(request):
                         password=password
                     )
                     login(request, user)
+                    # if next:
+                    #     return "http://127.0.0.1:8000" + next
+                    # else:
+                    #     return redirect(reverse('frontend_dashboard'))
                     return redirect(reverse('frontend_dashboard'))
                 else:
                     messages.warning(request, 'Compte suspendu')
@@ -217,6 +224,8 @@ def api(request):
             url = 'http://' + endpoint + url
             urls = url.split('//')
             url = urls[0] + '//' + urls[1] + '/'
+            if url.endswith("//"):
+                url = url.removesuffix("//")
             if request.method == "GET":
                 response = requests.get(url=url, headers=headers)
             elif request.method == "POST":

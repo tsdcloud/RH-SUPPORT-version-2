@@ -1,4 +1,5 @@
 import React, { Component, useContext, useEffect } from "react";
+import { ConfigProvider } from 'antd'
 import './index.css'
 import { render } from "react-dom";
 import {BrowserRouter as Router, Routes, Route } from 'react-router-dom';
@@ -24,6 +25,7 @@ export default function App() {
           <Route path="*" element={<h2 className="text-2xl">404 NOT FOUND</h2>} />
           <Route path="dashboard" element={<h2 className="text-2xl">Home page</h2>} />
           <Route path="explanation" element={<DemandeExplication />} />
+          <Route path="explanation/:id" element={<DemandeExplication />} />
         </Routes>
       </Router>
     // <h5>Something</h5>

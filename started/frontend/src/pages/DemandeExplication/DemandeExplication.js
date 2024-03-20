@@ -1,13 +1,14 @@
 import { Table, Modal, Dropdown, Drawer, Space, Button, Collapse } from 'antd'
 import React, {useEffect, useState, useMemo} from 'react'
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useParams, useNavigate } from 'react-router-dom';
 import { PlusIcon, EllipsisHorizontalIcon,UserPlusIcon, ShieldExclamationIcon, ReceiptRefundIcon, ArrowUturnRightIcon } from '@heroicons/react/24/outline'
-import Tab from '../../components/Tab/Tab';
 import ReponseForm from '../../components/Reponse/ReponseForm.jsx';
-import FileComponent from '../../components/FileComponent/FileComponent.jsx';
+import TemoinsForm from '../../components/Temoins/TemoinsForm.jsx';
 import ExplicationDetails from '../../components/ExplicationDetails/ExplicationDetails.jsx';
 import CollapsibleComponent from '../../components/CollapsibleComponent/CollapsibleComponent.jsx';
 import DetailCard from '../../components/DetailCard/DetailCard.jsx';
+import SecondaryTabs from '../../components/Tab/SecondaryTabs.js'
+import TabsWrapper from '../../components/Tabs/TabsWrapper.js'
 
 
 
@@ -25,14 +26,12 @@ const TYPE_DE = {
     upload: "upload_de"
 }
 
-// const REQUEST_STEP = {
-//     all_demande,
-//     request_intiated,
-//     request_received
-// }
 
 
 function DemandeExplication() {
+
+    const {id} = useParams();
+    const navigate = useNavigate();
 
     const [count, setCount] = useState(0)
     const[isOpenned, setIsOpenned]=useState(false);
@@ -48,14 +47,19 @@ function DemandeExplication() {
     const [motifs, setMotifs] = useState([]);
 
     const [isCollapsed, setIsCollapsed] = useState(false);
-
-    
+  
     // Form values
     const [initiator, setInitiator] = useState(null);
     const [receivers, setReceivers] = useState([]);
     const [receiver, setReceiver] = useState([]);
     const [motif, setMotif] = useState('');
-    const [description, setDescription] = useState('');
+    const [description, setDescription] = useState(
+`Madame/Monsieur,
+Il a été donné de constater que ...
+Le rapport de votre hiérarchie fait état de ...
+Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la présente les raisons de ...
+<b>NB:</b> Le refus de réponse à la présente demande d’explications et dans les délais annoncés sera assimilé à un acte d’insubordination et traité comme tel.
+    `);
 
 
 
@@ -103,6 +107,9 @@ function DemandeExplication() {
     const columns = [
           {
             title: '#',
+            render:(record)=>(
+                <>{dataSource.indexOf(record)+1}</>
+            )
           },
           {
             title: 'No Ref',
@@ -146,7 +153,7 @@ function DemandeExplication() {
           },
           {
             title: 'Actions',
-            render:(record, text)=><EllipsisHorizontalIcon onClick={()=>handleOpenResponse(record.uuid)} className="h-8 w-8 text-gray-500 cursor-pointer" />
+            render:(record, text)=><EllipsisHorizontalIcon onClick={()=>handleOpenDetail(record.uuid)} className="h-8 w-8 text-gray-500 cursor-pointer" />
           },
     ];
 
@@ -171,6 +178,28 @@ function DemandeExplication() {
        }
     }
 
+
+    const handleFetchDE= async (id)=>{
+
+        let headersList = {
+            "Accept": "*/*",
+        }
+
+       let url = `/api?end=demandes&termination=demande&detail=1&pid=${id}`
+       let response = await fetch(url, { 
+         method: "GET",
+         headers: headersList
+       });
+       
+       let res = await response.json();
+       console.log(res);
+       if(res.status === 200){
+        setActualRequest(res);
+        setOpen(true);
+        // setDataSource(res.results);
+       }
+    }
+
     /**
      * Returns the motifs for a given entity
      */
@@ -192,6 +221,14 @@ function DemandeExplication() {
             setMotifLoading(false);
             setMotifs(data);
         }
+    }
+
+    /**
+     * Handle details
+     */
+    const handleOpenDetail=(id)=>{
+        setOpen(true);
+        handleFetchDE(id);
     }
 
     /**
@@ -260,10 +297,10 @@ function DemandeExplication() {
 
         const response = await fetch(url, RequestInfo);
         let res = response.json();
-        if(res.status === 200){
+        if(res.status === 201){
             handleFetchAllDE();
             setIsOpenned(false);
-            Notification()
+            // Notification()
         }
         
     }
@@ -276,7 +313,16 @@ function DemandeExplication() {
         const explanations = data.filter(item=> item.reponse.length == 0);
         console.log(explanations);
         setDataSource(explanations);
+        
+        if(id){
+            handleFetchDE(id)
+        }
     }, []);
+
+
+    // useEffect(()=>{
+    //     handleFetchDE(id)
+    // }, [id])
 
     
     
@@ -417,9 +463,16 @@ function DemandeExplication() {
 
             {/* Demande explication content */}
             <div className='p-4'>
-                <ul id="tabs" className="inline-flex pt-2 px-1 w-full border-b space-x-2">
+                {/* <TabsComponents> */}
+                    {/* <Tab 
+                        title="Tab1"
+                        borderColor="gray"
+                        isActive={true}
+                    /> */}
+                {/* </TabsComponents> */}
+                {/* <ul id="tabs" className="inline-flex pt-2 px-1 w-full border-b space-x-2"> */}
                     {/* <p className='flex items-center'>Logo</p> */}
-                    <Tab 
+                    {/* <Tab 
                         title="Toute les demandes d'explication"
                         id="default-tab" 
                         // to="all" 
@@ -428,12 +481,12 @@ function DemandeExplication() {
                             setDataSource(data)
                             handleTabClick("explanation");
                         }} 
-                        className={`bg-white px-4 text-gray-800 font-semibold py-2 rounded-t border-t border-r border-l -mb-px ${
-                            path === 'explanation' ? 'border-t border-r border-l -mb-px bg-white' : 'bg-gray-500 border-b'
+                        className={`px-4 text-gray-800 font-semibold py-2 rounded-t border-t border-r border-l -mb-px ${
+                            path === 'explanation' ? 'border-t border-r border-l -mb-px  bg-gray-50 ' : 'bg-gray-200 border-b'
                         }`}
-                    />
-                    <Tab 
-                    title="Repondue"
+                    /> */}
+                    {/* <Tab 
+                    title="DE Repondue"
                     // id="default-tab" 
                     // to="answered"
                     number = {data.filter(item => item.reponse.length > 0).length}
@@ -443,30 +496,71 @@ function DemandeExplication() {
                         console.log(dataSource);
                         handleTabClick("answered")
                     }} 
-                    className={`bg-white px-4 text-gray-800 font-semibold py-2 rounded-t border-t border-r border-l -mb-px ${
-                        path === ('answered') ? 'border-t border-r border-l -mb-px bg-white' : 'bg-gray-500 border-b'
+                    className={`px-4 text-gray-800 font-semibold py-2 rounded-t border-t border-r border-l -mb-px ${
+                        path === ('answered') ? 'border-t border-r border-l -mb-px bg-gray-50 ' : 'bg-gray-200 border-b'
                     }`}
-                    />
-                    <Tab 
+                    /> */}
+                    {/* <Tab 
                     title="En attente de témoins" 
                     // id="default-tab" 
                     // to="answered" 
+                    number = {data.filter(item => item.temoins?.length > 0).length}
                     onClick={() => handleTabClick("witness")} 
-                    className={`bg-white px-4 text-gray-800 font-semibold py-2 rounded-t border-t border-r border-l -mb-px ${
-                        path === ('witness') ? 'border-t border-r border-l -mb-px bg-white' : 'bg-gray-500 border-b'
+                    className={`px-4 text-gray-800 font-semibold py-2 rounded-t border-t border-r border-l -mb-px ${
+                        path === ('witness') ? 'border-t border-r border-l -mb-px bg-gray-50 ' : 'bg-gray-200 border-b'
                     }`}
-                    />
-                    <Tab 
+                    /> */}
+                    {/* <Tab 
                     title="En attente de sanction" 
                     // id="default-tab" 
                     // to="answered" 
+                    number = {data.filter(item => item.proposition?.length > 0).length}
                     onClick={() => handleTabClick("sanction")} 
-                    className={`bg-white px-4 text-gray-800 font-semibold py-2 rounded-t border-t border-r border-l -mb-px ${
-                        path === ('sanction') ? 'border-t border-r border-l -mb-px bg-white' : 'bg-gray-500 border-b'
+                    className={`px-4 text-gray-800 font-semibold py-2 rounded-t border-t border-r border-l -mb-px ${
+                        path === ('sanction') ? 'border-t border-r border-l -mb-px bg-gray-50  ' : 'bg-gray-200 border-b'
                     }`}
+                    /> */}
+                {/* </ul> */}
+
+                <TabsWrapper
+                    className=""
+                >
+                    <SecondaryTabs 
+                        title={`Toutes les DE (${data.length})`}
+                        onClick={() =>{ 
+                            setDataSource(data)
+                            handleTabClick("explanation");
+                        }}
+                        isActive={path === 'explanation'} 
                     />
-                </ul>
+                    <SecondaryTabs 
+                        title={`En attente de réponse (${data.filter(de=>de.statut_de == 1).length})`}
+                        onClick={async() =>{ 
+                            let repondue = data.filter(de=>de.statut_de == 1)
+                            setDataSource(repondue);
+                            handleTabClick("response");
+                        }}
+                        isActive={path === 'response'} 
+                    />
+                    <SecondaryTabs 
+                        title={`En attente de témoins (${data.filter(de=>de.statut_de == 3).length})`}
+                        onClick={() =>{ 
+                            setDataSource(data)
+                            handleTabClick("witness");
+                        }}
+                        isActive={path === 'witness'} 
+                    />
+                    <SecondaryTabs 
+                        title={`En attente de proposition (${data.filter(de=>de.statut_de == 2).length})`}
+                        onClick={() =>{ 
+                            setDataSource(data)
+                            handleTabClick("sanction");
+                        }}
+                        isActive={path === 'sanction'} 
+                    />
+                </TabsWrapper>
                 <Table 
+                    loading={dataSource.length > 0 ? false :true}
                     dataSource={dataSource}
                     columns={columns}
                     pagination={{
@@ -500,7 +594,7 @@ function DemandeExplication() {
                         {/*Header section  */}
                         <div className="flex items-center p-2 shadow-sm bg-white rounded-md">
                             {/* <h4 className="text-lg font-semibold">Demande D'explication</h4> */}
-                            <div className="flex justify-between items-center space-x-3">
+                            {/* <div className="flex justify-between items-center space-x-3">
                                 <button className="text-blue-500 flex items-center space-x-2">
                                     Repondre{" "}
                                     <ArrowUturnRightIcon class="h-3 w-3 text-blue-500" />
@@ -517,7 +611,7 @@ function DemandeExplication() {
                                     Faire une requette{" "}
                                     <ReceiptRefundIcon class="h-3 w-3 text-green-500" />
                                 </button>
-                            </div>
+                            </div> */}
                         </div>
 
                         {/* Content section */}
@@ -538,35 +632,17 @@ function DemandeExplication() {
 
                         {/* Reponse collapse */}
                         <CollapsibleComponent 
-                        title={`Toutes les réponses (${
-                            dataSource
-                            .filter(data=>data.uuid == actualRequest.uuid)[0]?.reponse.length
-                        })`} 
+                        title={`Toutes les réponses (${actualRequest?.reponse?.length})`} 
                         className="m-y-2"
                         >
-                            {actualRequest.reponse?.map((data)=>
+                            {actualRequest?.reponse?.map((data)=>
                                     (
-                                        dataSource
-                                        .filter(data=>{
-                                            return data.uuid == actualRequest.uuid
-                                        })
-                                        .filter(item => {
-                                            return item.reponse.length > 0
-                                        })
-                                        .length > 0 ?
-                                        <div>
-                                            <DetailCard
-                                                borderColor={`border-l-blue-500 my-1`}
-                                                name={data.id_employe}
-                                                description={data.commentaire_reponse}
-                                                date={data.date_init}
-                                            /> 
-                                        </div>
-                                        :
-                                        <div className="border-[1px] p-2 border-gray-100">
-                                            <p className="italics">Aucune réponse</p>
-                                        </div>
-                                    
+                                        <DetailCard
+                                            borderColor={`border-l-blue-500 my-1`}
+                                            name={data.id_employe}
+                                            description={data.commentaire_reponse}
+                                            date={data.date_init}
+                                        /> 
                                     )
                                 )
                             }
@@ -591,60 +667,26 @@ function DemandeExplication() {
 
                         {/* Toutes les interpélations */}
                         <CollapsibleComponent 
-                        title={`Toutes les interpélations (${
-                            dataSource
-                            .filter(data=>{
-                                return data.uuid == actualRequest.uuid
-                            })
-                            .filter(item => {
-                                return item.temoins.length > 0
-                            })
-                            .length
-                        })`} 
+                        title={`Toutes les interpélations (${actualRequest?.temoins?.length})`} 
                         className="m-y-2"
                         >
-                            {actualRequest.temoins?.map((data)=>
+                            {actualRequest?.reponse?.map((data)=>
                                     (
-                                        dataSource
-                                        .filter(data=>{
-                                            return data.uuid == actualRequest.uuid
-                                        })
-                                        .filter(item => {
-                                            return item.temoins.length > 0
-                                        })
-                                        .length > 0 ?
                                         <DetailCard
-                                            borderColor={`border-l-blue-500 my-1`}
+                                            borderColor={`border-l-yellow-500 my-1`}
                                             name={data.id_employe}
                                             description={data.commentaire_reponse}
                                             date={data.date_init}
-                                        /> :
-                                        <div className="border-[1px] p-2 border-gray-100">
-                                            <p className="italics">Aucune réponse</p>
-                                        </div>
-                                    
+                                        /> 
                                     )
-                            )
+                                )
                             }
+                           
                         </CollapsibleComponent>
                         <div>
                             {
                                 temoinFormIsOpenned && 
-                                <div className="">
-                                    <select 
-                                        className={receiverLoading?'border-[1px] bg-gray-100 border-gray-100 rounded-lg p-2 w-full focus:outline-0' :'border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0'} 
-                                        disabled={receiverLoading}
-                                        value={receiver}
-                                        onChange={e=>setReceiver(e.target.value)}
-                                        >
-                                        <option value="">Témoins</option>
-                                        {
-                                            receivers.map((users)=>(
-                                                <option key={users.user.id} value={users.user.id}>{`${users.user.member.first_name} ${users.user.member.last_name}`}</option>
-                                            ))
-                                        }
-                                    </select>
-                                </div>
+                                <TemoinsForm temoins={receivers}/>
                             }
                         </div>
                         <div className="flex justify-end items-center space-x-2 mt-2">
@@ -658,47 +700,24 @@ function DemandeExplication() {
 
                         {/* Toutes les sanctions */}
                         <CollapsibleComponent 
-                        title={`Toutes les sanctions (${
-                            dataSource
-                            .filter(data=>{
-                                return data.uuid == actualRequest.uuid
-                            })
-                            .filter(item => {
-                                return item.temoins.length > 0
-                            })
-                            .length
-                        })`} 
+                        title={`Toutes les sanctions (${actualRequest?.propositions?.length})`} 
                         className="m-y-2"
                         >
-                            {actualRequest.propositions?.map((data)=>
+                            {actualRequest?.propositions?.map((data)=>
                                     (
-                                        dataSource
-                                        .filter(data=>{
-                                            return data.uuid == actualRequest.uuid
-                                        })
-                                        .filter(item => {
-                                            return item.propositions.length > 0
-                                        })
-                                        .length > 0 ?
                                         <DetailCard
-                                            borderColor={`border-l-blue-500 my-1`}
+                                            borderColor={`border-l-yellow-500 my-1`}
                                             name={data.id_employe}
                                             description={data.commentaire_reponse}
                                             date={data.date_init}
-                                        /> :
-                                        <div className="border-[1px] p-2 border-gray-100">
-                                            <p className="italics">Aucune réponse</p>
-                                        </div>
-                                    
+                                        /> 
                                     )
-                            )
+                                )
                             }
                         </CollapsibleComponent>
                     </div>
                 </div>
             </Drawer>
-
-
         </div>
     </>
   )

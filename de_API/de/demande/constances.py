@@ -10,31 +10,13 @@ STATUT_DE_CHOICE = [
     ('1', 'waiting_for_response'),
     ('2', 'waiting_for_sanction'),
     ('3', 'waiting_witness_response'),
-    ('4', 'note_rh'),
-    ('5', 'archiving'),
-]
-
-
-DE_RESPONSE_STATUT = [
-    ('1', 'on_time'),
-    ('2', 'out_of_time'),
-    ('3', 'not_responded'),
-]
-
-
-DE_RESPONSE_TYPE = [
-    ('1', 'addressee'),
-    ('2', 'witness'),
+    ('4', 'archieved'),
+    ('5', 'responded_out_of_time'),
+    ('6', 'responded_on_time')
 ]
 
 
 DE_SANCTION_STATUT = [
-    ('1', 'proposition'),
-    ('2', 'validation'),
-]
-
-
-STATUS_PROP = [
     ('1', 'proposition'),
     ('2', 'validation'),
 ]
@@ -59,12 +41,6 @@ def getEmployee(token: str):
    return res.json()
 
 
-# def getMotifs(token: str, entity: str):
-#     url = END_POINT+"/motif?entity="+entity+"&rubrique=1"
-#     res = requests.get(url=url, headers={"Authorization": token})
-#     return res.json()
-
-
 def getMotifs(token: str, entity: str):
     url = DE_END_POINT+"/motif?entity="+entity+"&rubrique=1"
     res = requests.get(url=url, headers={"Authorization": token})
@@ -78,8 +54,6 @@ def getMotifDetail(id: str, rubrique: str):
     res = requests.get(url=url)
     return res.json()
  
-
-
 
 def perform_action(request):
     # Perform your action here

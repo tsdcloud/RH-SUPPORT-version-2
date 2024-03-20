@@ -54,10 +54,11 @@ function ReponseForm(props) {
         }
 
         const response = await fetch(url, RequestInfo);
-        let res = response.json();
-        console.log(res);
-        await props.onSave(1);
-        if(res.status === 201){
+        console.log(response.status);
+        if(response.status == 201){
+            let res = response.json();
+            console.log(res);
+            await props.onSave(1);
             // handleFetchAllDE();
             // setIsOpenned(false);
             // Notification()
@@ -66,7 +67,7 @@ function ReponseForm(props) {
     }
   return (
     <div 
-        className="w-1/2 h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-gray-100 p-2 ">          
+        className="w-full h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-gray-100 p-2 ">          
         <div className='w-full'>
             <div className='w-full'>
                 <form className='flex flex-col space-y-3' onSubmit={handleSaveResponse}>
@@ -86,12 +87,14 @@ function ReponseForm(props) {
                         placeholder="Votre reponse a votre demande d'explication..."
                     >
                     </textarea>
-                    <button type='submit' className='flex items-center px-2 py-1 shadow-sm bg-blue-500 rounded-lg text-white'
-                    disable={disableReponseBtn}
-                    >
-                        <PaperAirplaneIcon class="h-6 w-6 text-white" />&nbsp;&nbsp;&nbsp;&nbsp;
-                        Envoyer la reponse
-                    </button>
+                    <div className='flex justify-end items-center'>
+                        <button type='submit' className='flex items-center px-2 py-1 shadow-sm bg-blue-500 rounded-lg text-white'
+                        disable={disableReponseBtn}
+                        >
+                            <PaperAirplaneIcon class="h-6 w-6 text-white" />&nbsp;&nbsp;&nbsp;&nbsp;
+                            Envoyer la reponse
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
