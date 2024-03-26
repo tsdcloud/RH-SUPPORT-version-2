@@ -102,10 +102,6 @@ def f_login(request):
                         password=password
                     )
                     login(request, user)
-                    # if next:
-                    #     return "http://127.0.0.1:8000" + next
-                    # else:
-                    #     return redirect(reverse('frontend_dashboard'))
                     return redirect(reverse('frontend_dashboard'))
                 else:
                     messages.warning(request, 'Compte suspendu')

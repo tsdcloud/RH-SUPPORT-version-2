@@ -2,12 +2,12 @@ import React from 'react'
 
 function DetailCard(props) {
   return (
-    <div className={`${props.borderColor} border-l-[3px] border-r-[1px] border-t-[1px] border-b-[1px] p-2`}>
+    <div className={`${props.borderColor} border-l-[3px] border-r-[1px] border-t-[1px] border-b-[1px] p-2 shadow-sm bg-white rounded-lg`}>
         <div>
-            <p>{props.name}</p>
+            <p className='font-semibold'>{props.name}</p>
         </div>
         <div>
-            <p>
+            <p className='text-md'>
                 {props.description}
             </p>
         </div>
@@ -15,7 +15,7 @@ function DetailCard(props) {
             {/* <FileComponent fileName="Permission d'absence"/> */}
         </div>
         <div className="flex justify-end">
-            <p className="text-xs">
+            <p className="text-xs font-semibold">
                 {props.date}
             </p>
         </div>

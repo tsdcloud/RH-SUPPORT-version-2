@@ -14,6 +14,25 @@ export default function AuthProvider (props){
   // const [user,setUser] = useState({member:{is_superuser:false, user_permissions:[]}});
   const [permissions, setPermissions] = useState([]);
 
+  const getEntityEmployees = async (entity_id, user_id, token) => {
+    const url= `api/?end=entity&termination=firm&detail=1&pid=${id}&action=employees`;
+    let RequestInfo = {
+        method: "GET",
+        maxBodyLength: Infinity,
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    };
+    const response = await fetch(url, RequestInfo);
+    const result = await response.json();
+    if(response.ok){
+        let data = result?.results;
+        const actualUser = await data.filter(users => users.user.id === user_id);
+        return withoutUser;
+    }
+    return [];
+};
+
   const getEntity = async (token) => {
     let config = {
       method: "get",

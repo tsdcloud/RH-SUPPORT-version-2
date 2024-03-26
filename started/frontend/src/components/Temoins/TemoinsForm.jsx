@@ -4,24 +4,19 @@ import React, {useState} from 'react'
 function Temoins(props) {
 
     const [temoins, setTemoins] = useState(null);
-    const [selectedOptions, setSelectedOptions] = useState([]);
-    const handleSubmit=(e)=>{
-        e.preventDefault();
-        console.log(temoins)
-    }
+    
 
     const handleChange = (event) => {
-        setSelectedOptions(event.target.selectedOptions.map((option) => option.value));
+        props.selectedOption(event.target.selectedOptions.map((option) => option.value));
     };
   return (
     <div className='w-full'>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={props.onSubmit}>
             <label htmlFor="">Choisir témoin(s)</label>
             <select 
                 className={props.temoins.length < 1?'border-[1px] bg-gray-100 border-gray-100 rounded-lg p-2 w-full focus:outline-0' :'border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0'} 
                 disabled={props.temoins.length <1}
-                onChange={handleChange}
-                multiple
+                onChange={props.onChange}x
             >
                 <option value="">Temoins</option>
                 {

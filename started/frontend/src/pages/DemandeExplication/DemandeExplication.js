@@ -1,4 +1,4 @@
-import { Table, Modal, Dropdown, Drawer, Space, Button, Collapse } from 'antd'
+import { Table, Modal, Dropdown, Drawer, Space, Button, Collapse, Badge, notification } from 'antd'
 import React, {useEffect, useState, useMemo} from 'react'
 import { useLocation, Link, useParams, useNavigate } from 'react-router-dom';
 import { PlusIcon, EllipsisHorizontalIcon,UserPlusIcon, ShieldExclamationIcon, ReceiptRefundIcon, ArrowUturnRightIcon } from '@heroicons/react/24/outline'
@@ -27,6 +27,14 @@ const TYPE_DE = {
 }
 
 
+// Notification system
+const openNotification = () => {
+    notification.open({
+      message: 'Demande d\'explication',
+      description:
+        'Demande d\'explication initié avec success',
+    });
+  };
 
 function DemandeExplication() {
 
@@ -45,6 +53,7 @@ function DemandeExplication() {
     const [motifLoading, setMotifLoading] = useState(true);
     const [typeDE, setTypeDE] = useState(TYPE_DE.init)
     const [motifs, setMotifs] = useState([]);
+    const [deIsLoading, setDEIsLoading] = useState(true);
 
     const [isCollapsed, setIsCollapsed] = useState(false);
   
@@ -61,11 +70,13 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
 <b>NB:</b> Le refus de réponse à la présente demande d’explications et dans les délais annoncés sera assimilé à un acte d’insubordination et traité comme tel.
     `);
 
+    const [searchDE, setSearchDE] = useState('')
 
 
     const [reponseFormIsOpenned, setReponseFormIsOpenned] = useState(false);
     const [temoinFormIsOpenned, setTemoinFormIsOpenned] = useState(false);
-
+    const [selectedOptions, setSelectedOptions] = useState('');
+    
     const [open, setOpen] = useState(false);
 
     const showDrawer = () => {
@@ -92,7 +103,6 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
         console.log(id)
         alert("Response sent");
         handleFetchAllDE();
-        // handleSetActualRequest(id)
         setOpen(false)
     }
 
@@ -107,6 +117,7 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
     const columns = [
           {
             title: '#',
+            width: "150px",
             render:(record)=>(
                 <>{dataSource.indexOf(record)+1}</>
             )
@@ -150,9 +161,30 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
             title: 'Date initiation',
             dataIndex: 'date_init',
             key: 'date_init',
+            width:"150px",
+          },
+          {
+            title: 'Statut',
+            dataIndex: 'statut_de',
+            key: 'date_init',
+            render:(text)=>(
+                text === "1"?
+                <div className="text-green-500 font-semibold">En attente de réponse</div>:
+                text === "2"?
+                <div className="text-orange-500 font-semibold">En attente de sanction</div>:
+                text === "3"?
+                <div className="text-yellow-500 font-semibold">En attente réponse du témoin</div>:
+                text === "4"?
+                <div className="text-purple-500 font-semibold">Archivé</div>:
+                text === "5"?
+                <div className="text-red-500 font-semibold">Répondu hors délais</div>:
+                text === "6" &&
+                <div className="text-blue-500 font-semibold">Répondu</div>
+            )
           },
           {
             title: 'Actions',
+            width:"100px",
             render:(record, text)=><EllipsisHorizontalIcon onClick={()=>handleOpenDetail(record.uuid)} className="h-8 w-8 text-gray-500 cursor-pointer" />
           },
     ];
@@ -170,12 +202,21 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
          headers: headersList
        });
        
-       let res = await response.json();
-       console.log(res);
-       if(res.status === 200){
-        setData(res.results);
-        setDataSource(res.results);
+       try{
+        let res = await response.json();
+        if(res.status === 200){
+            setData(res.results);
+            setDataSource(res.results);
+        }
+        
        }
+       catch(err){
+        console.error("FETCH ALL DE ERROR :", err)
+       }
+       finally{
+        setDEIsLoading(false);
+       }
+       
     }
 
 
@@ -200,6 +241,9 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
        }
     }
 
+    const handleChange = (event) => {
+        setSelectedOptions(event.target.value);
+    };
     /**
      * Returns the motifs for a given entity
      */
@@ -271,6 +315,7 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
      * Returns the list of employees from a given entity 
      */
     const handleSaveDE = async () => {
+        // evt.preventDefault();
         const url = "/api";
         
         const headersList={
@@ -283,6 +328,7 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
             "termination":"demande",
             "detail":0,
 
+            "user_id":JSON.parse(_USER).id,
             "employer_initiateur":JSON.parse(_USER).id,
             "employer_recepteur":receiver,
             "description":description,
@@ -295,15 +341,65 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
             body:formData 
         }
 
+        try{
+            const response = await fetch(url, RequestInfo);
+            let res = response.json();
+            if(res.status === 201){
+                handleFetchAllDE();
+                setIsOpenned(false);
+                setReceiver('');
+                setDescription('');
+                setMotif('');
+                // openNotification();
+                // Notification()
+            }
+        }
+        catch(err){
+            console.log(err)
+        }finally{
+
+        }
+
+        
+    }
+
+    const handleChooseWitness = async (e) => {
+        e.preventDefault();
+        console.log(selectedOptions);
+        const url = "/api";
+        
+        const headersList={
+            Accept: '*/*',
+            Authorization: 'Bearer '+JSON.parse(_USER)?.access
+        }
+
+        const formData =JSON.stringify({
+            "end":"demandes",
+            "termination":"temoins",
+            "detail":0,
+
+            "id_employe":selectedOptions,
+            "id_de": actualRequest.uuid,
+        });
+
+        const RequestInfo={
+            headers: headersList,
+            method: 'POST',
+            body:formData 
+        }
+
         const response = await fetch(url, RequestInfo);
         let res = response.json();
+        handleFetchAllDE();
+        setSelectedOptions('');
+        setOpen(false);
         if(res.status === 201){
-            handleFetchAllDE();
-            setIsOpenned(false);
+            // openNotification();
             // Notification()
         }
         
     }
+    
 
     useEffect(()=>{
         getEntityEmployees(userEntity);
@@ -320,136 +416,35 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
     }, []);
 
 
-    // useEffect(()=>{
-    //     handleFetchDE(id)
-    // }, [id])
+    useEffect(()=>{
+        if(setSearchDE.length > 0){
+            console.log(data
+                .filter(de=>de.code_de.includes(searchDE) || de.employer_recepteur.includes(searchDE) || de.employer_initiateur.includes(searchDE) || de.date_init.includes(searchDE)))
+            setDataSource(data
+                .filter(de=>de.code_de.includes(searchDE) || de.employer_recepteur.includes(searchDE) || de.employer_initiateur.includes(searchDE) || de.date_init.includes(searchDE) || de.statut_de.includes(searchDE)
+                
+                )
+                )
+        }else{
+            setDataSource(data);
+        }
+    }, [searchDE])
 
     
     
   return (
     <>
         <div className='p-5'>
-            
-            <Modal
-                title="Demande d'explication"
-                centered
-                open={isOpenned}
-                onCancel={() => setIsOpenned(false)}
-                onOk={handleSaveDE}
-                footer={
-                    (_, {CancelBtn})=>(
-                        <>
-                        <CancelBtn />
-                        <button
-                            className='text-white rounded-md shadow-sm mx-3 bg-blue-500 px-3 py-1'
-                            onClick={handleSaveDE}
-                        >
-                            Initier
-                        </button>
-                        </>
-                    )
-                }
-            >
-                <form onSubmit={()=>{}} className='px-2 space-y-2 w-full h-[400px] max-h-[400px] overflow-y-scroll'>
-                    {/* Type the of demandes */}
-                    <select 
-                    value={typeDE}
-                    onChange={e=>setTypeDE(e.target.value)}
-                    className={'border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0'}>
-                        <option value={TYPE_DE.init}>Initier une demande d'explanation</option>
-                        <option value={TYPE_DE.upload}>Téléverser une demande d'explication</option>
-                    </select>
-
-                    {/* Receiver */}
-                    <select 
-                        className={receiverLoading?'border-[1px] bg-gray-100 border-gray-100 rounded-lg p-2 w-full focus:outline-0' :'border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0'} 
-                        disabled={receiverLoading}
-                        value={receiver}
-                        onChange={e=>setReceiver(e.target.value)}
-                        >
-                        <option value="">Destinataire</option>
-                        {
-                            receivers.map((users)=>(
-                                <option key={users.user.id} value={users.user.id}>{`${users.user.member.first_name} ${users.user.member.last_name}`}</option>
-                            ))
-                        }
-                    </select>
-
-                    {/* Initiator */}
-                    {
-                        typeDE == TYPE_DE.upload && 
-                        <>
-                            <select 
-                                className={receiverLoading?'border-[1px] bg-gray-100 border-gray-100 rounded-lg p-2 w-full focus:outline-0' :'border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0'} 
-                                disabled={receiverLoading}
-                                value={initiator}
-                                onChange={e=>setInitiator(e.target.value)}
-                                >
-                                <option value="">Initiateur</option>
-                            </select>
-                            <div className=''>
-                                <label className='' for="init_date">Date d'initiation :</label>
-                                <input type="date" id="init_date" className="border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0"/>
-                            </div>
-                        </>
-                    }
-
-                    {/* Motifs */}
-                    <select 
-                        className={motifLoading?'border-[1px] bg-gray-100 border-gray-100 rounded-lg p-2 w-full focus:outline-0' :'border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0'} 
-                        disabled={motifLoading}
-                        value={motif}
-                        onChange={(e)=>setMotif(e.target.value)}
-                    >
-                        <option value="">Motifs</option>
-                        {
-                            motifs.map((motif)=>
-                                <option value={motif.uuid} key={motif.uuid}>{motif.nom}</option>
-                            )
-                        }
-                    </select>  
-
-                    {/* Justification */}
-                    <div className='p-2 w-full'>
-                        <label htmlFor="justif font-bold">Choisir un justif:</label>
-                        <input 
-                        type='file' 
-                        id="justif"
-                        className='border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0' 
-                        placeholder='Ajouter une piece Jointe'/>             
-                    </div>
-
-
-                    {/* The mannual demande d'explication */}
-                    {
-                        typeDE == TYPE_DE.upload && 
-                        <div className='p-2 w-full'>
-                            <div className='rounded-lg w-full '>
-                                <label htmlFor="demande_file">Televerser la demande:</label>             
-                            </div>
-                            <input 
-                            type='file' 
-                            id="demande_file"
-                            className='border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0' 
-                            placeholder='Ajouter une piece Jointe'/>
-                        </div>
-                    }
-
-                    {/* Description */}
-                    <textarea 
-                        className='border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0'
-                        placeholder='Descriptions'
-                        rows="5"
-                        value={description}
-                        onChange={e=>setDescription(e.target.value)}
-                    >
-                    </textarea>
-                </form>
-            </Modal>
 
             <div className='flex justify-between px-4'>
-                <div className='relative'>
-                    <input className=' px-2 py-1 border-[1px] border-gray-100 rounded-lg text-sm focus:outline-0' type='search' placeholder='Recherche'/>
+                <div className='relative w-4/5'>
+                    <input 
+                        className=' px-2 py-1 border-[1px] border-gray-200 text-gray-800 rounded-lg text-sm focus:outline-0 w-2/5' 
+                        type='search' 
+                        placeholder='Recherche'
+                        value={searchDE}
+                        onChange={e=>setSearchDE(e.target.value)}
+                    />
                 </div>
                 <div className='flex items-center space-x-1'>
                     <button 
@@ -463,65 +458,6 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
 
             {/* Demande explication content */}
             <div className='p-4'>
-                {/* <TabsComponents> */}
-                    {/* <Tab 
-                        title="Tab1"
-                        borderColor="gray"
-                        isActive={true}
-                    /> */}
-                {/* </TabsComponents> */}
-                {/* <ul id="tabs" className="inline-flex pt-2 px-1 w-full border-b space-x-2"> */}
-                    {/* <p className='flex items-center'>Logo</p> */}
-                    {/* <Tab 
-                        title="Toute les demandes d'explication"
-                        id="default-tab" 
-                        // to="all" 
-                        number={data.length}
-                        onClick={() =>{ 
-                            setDataSource(data)
-                            handleTabClick("explanation");
-                        }} 
-                        className={`px-4 text-gray-800 font-semibold py-2 rounded-t border-t border-r border-l -mb-px ${
-                            path === 'explanation' ? 'border-t border-r border-l -mb-px  bg-gray-50 ' : 'bg-gray-200 border-b'
-                        }`}
-                    /> */}
-                    {/* <Tab 
-                    title="DE Repondue"
-                    // id="default-tab" 
-                    // to="answered"
-                    number = {data.filter(item => item.reponse.length > 0).length}
-                    onClick={() => {
-                        const explanations = data.filter(item => item.reponse.length > 0);
-                        setDataSource(explanations);
-                        console.log(dataSource);
-                        handleTabClick("answered")
-                    }} 
-                    className={`px-4 text-gray-800 font-semibold py-2 rounded-t border-t border-r border-l -mb-px ${
-                        path === ('answered') ? 'border-t border-r border-l -mb-px bg-gray-50 ' : 'bg-gray-200 border-b'
-                    }`}
-                    /> */}
-                    {/* <Tab 
-                    title="En attente de témoins" 
-                    // id="default-tab" 
-                    // to="answered" 
-                    number = {data.filter(item => item.temoins?.length > 0).length}
-                    onClick={() => handleTabClick("witness")} 
-                    className={`px-4 text-gray-800 font-semibold py-2 rounded-t border-t border-r border-l -mb-px ${
-                        path === ('witness') ? 'border-t border-r border-l -mb-px bg-gray-50 ' : 'bg-gray-200 border-b'
-                    }`}
-                    /> */}
-                    {/* <Tab 
-                    title="En attente de sanction" 
-                    // id="default-tab" 
-                    // to="answered" 
-                    number = {data.filter(item => item.proposition?.length > 0).length}
-                    onClick={() => handleTabClick("sanction")} 
-                    className={`px-4 text-gray-800 font-semibold py-2 rounded-t border-t border-r border-l -mb-px ${
-                        path === ('sanction') ? 'border-t border-r border-l -mb-px bg-gray-50  ' : 'bg-gray-200 border-b'
-                    }`}
-                    /> */}
-                {/* </ul> */}
-
                 <TabsWrapper
                     className=""
                 >
@@ -532,6 +468,22 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
                             handleTabClick("explanation");
                         }}
                         isActive={path === 'explanation'} 
+                    />
+                    <SecondaryTabs 
+                        title={`Initier (${data.filter(de=>de.user_id === JSON.parse(_USER).id).length})`}
+                        onClick={() =>{ 
+                            setDataSource(data.filter(de=>de.user_id === JSON.parse(_USER).id))
+                            handleTabClick("initier");
+                        }}
+                        isActive={path === 'initier'} 
+                    />
+                    <SecondaryTabs 
+                        title={`reçu (${data.filter(de=>de.user_id !== JSON.parse(_USER).id).length})`}
+                        onClick={() =>{ 
+                            setDataSource(data.filter(de=>de.user_id !== JSON.parse(_USER).id))
+                            handleTabClick("received");
+                        }}
+                        isActive={path === 'received'} 
                     />
                     <SecondaryTabs 
                         title={`En attente de réponse (${data.filter(de=>de.statut_de == 1).length})`}
@@ -545,7 +497,8 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
                     <SecondaryTabs 
                         title={`En attente de témoins (${data.filter(de=>de.statut_de == 3).length})`}
                         onClick={() =>{ 
-                            setDataSource(data)
+                            let repondue = data.filter(de=>de.statut_de == 3)
+                            setDataSource(repondue);
                             handleTabClick("witness");
                         }}
                         isActive={path === 'witness'} 
@@ -553,14 +506,126 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
                     <SecondaryTabs 
                         title={`En attente de proposition (${data.filter(de=>de.statut_de == 2).length})`}
                         onClick={() =>{ 
-                            setDataSource(data)
+                            let repondue = data.filter(de=>de.statut_de == 2)
+                            setDataSource(repondue);
                             handleTabClick("sanction");
                         }}
                         isActive={path === 'sanction'} 
                     />
                 </TabsWrapper>
+
+                <Modal
+                    title="Initier une demande d'explication"
+                    centered
+                    open={isOpenned}
+                    onCancel={() => setIsOpenned(false)}
+                    footer={()=><></>}
+                >
+                        <form onSubmit={handleSaveDE} className='px-2 space-y-2 w-full flex flex-col justify-center h-[400px] max-h-[400px] overflow-y-scroll'>
+                            {/* Type the of demandes */}
+                            {/* <select 
+                            value={typeDE}
+                            onChange={e=>setTypeDE(e.target.value)}
+                            className={'border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0'}>
+                                <option value={TYPE_DE.init}>Initier une demande d'explanation</option>
+                                <option value={TYPE_DE.upload}>Téléverser une demande d'explication</option>
+                            </select> */}
+
+                            {/* Receiver */}
+                            <select 
+                                className={`${receiverLoading?'border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0 bg-gray-100' :'border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0'} text-md`} 
+                                disabled={receiverLoading}
+                                value={receiver}
+                                onChange={e=>setReceiver(e.target.value)}
+                                >
+                                <option value="">Destinataire</option>
+                                {
+                                    receivers.map((users)=>(
+                                        <option key={users.user.id} value={users.user.id}>{`${users.user.member.first_name} ${users.user.member.last_name}`}</option>
+                                    ))
+                                }
+                            </select>
+
+                            {/* Initiator */}
+                            {
+                                typeDE == TYPE_DE.upload && 
+                                <>
+                                    <select 
+                                        className={receiverLoading?'border-[1px] bg-gray-100 border-gray-100 rounded-lg p-2 w-full focus:outline-0' :'border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0'} 
+                                        disabled={receiverLoading}
+                                        value={initiator}
+                                        onChange={e=>setInitiator(e.target.value)}
+                                        >
+                                        <option value="">Initiateur</option>
+                                    </select>
+                                    <div className=''>
+                                        <label className='' for="init_date">Date d'initiation :</label>
+                                        <input type="date" id="init_date" className="border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0"/>
+                                    </div>
+                                </>
+                            }
+
+                            {/* Motifs */}
+                            <select 
+                                className={`${motifLoading?'border-[1px] bg-gray-100 border-gray-100 rounded-lg p-2 w-full focus:outline-0' :'border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0'} text-md`} 
+                                disabled={motifLoading}
+                                value={motif}
+                                onChange={(e)=>setMotif(e.target.value)}
+                            >
+                                <option value="">Motifs</option>
+                                {
+                                    motifs.map((motif)=>
+                                        <option value={motif.uuid} key={motif.uuid}>{motif.nom}</option>
+                                    )
+                                }
+                            </select>  
+
+                            {/* Justification */}
+                            <div className='p-2 w-full'>
+                                <label htmlFor="justif font-bold">Choisir un justif:</label>
+                                <input 
+                                type='file' 
+                                id="justif"
+                                className='border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0' 
+                                placeholder='Ajouter une piece Jointe'/>             
+                            </div>
+
+
+                            {/* The mannual demande d'explication */}
+                            {
+                                typeDE == TYPE_DE.upload && 
+                                <div className='p-2 w-full'>
+                                    <div className='rounded-lg w-full '>
+                                        <label htmlFor="demande_file">Televerser la demande:</label>             
+                                    </div>
+                                    <input 
+                                    type='file' 
+                                    id="demande_file"
+                                    className='border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0' 
+                                    placeholder='Ajouter une piece Jointe'/>
+                                </div>
+                            }
+
+                            {/* Description */}
+                            <textarea 
+                                className='border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0'
+                                placeholder='Descriptions'
+                                rows="5"
+                                value={description}
+                                onChange={e=>setDescription(e.target.value)}
+                            >
+                            </textarea>
+                            <div className="">
+                                <button className="text-white font-md bg-blue-500 p-2 rounded-lg" type="submit">
+                                    <span>Initier la demande</span>
+                                </button>
+                            </div>
+                        </form>
+                    <div className="w-full">
+                    </div>
+                </Modal>
                 <Table 
-                    loading={dataSource.length > 0 ? false :true}
+                    loading={deIsLoading}
                     dataSource={dataSource}
                     columns={columns}
                     pagination={{
@@ -568,11 +633,35 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
                       }}
                       scroll={{
                         y: 200,
+                        x: 500
                       }}
                 />
             </div>
 
-            {/* Drawer */}
+
+
+            {/* DE initiation drawer */}
+            <Drawer
+                title="Demande d'explication"
+                placement="bottom"
+                width={1000}
+                height={600}
+                onClose={() => setIsOpenned(false)}
+                open={false}
+                extra={
+                <Space>
+                    <Button onClick={onClose} className="">Cancel</Button>
+                </Space>
+                }
+            >
+                
+
+            </Drawer>
+
+
+
+
+            {/* Drawer details drawer*/}
             <Drawer
                 title="Demande d'explication"
                 placement="bottom"
@@ -582,36 +671,18 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
                 open={open}
                 extra={
                 <Space>
-                    <Button onClick={onClose} className="">Cancel</Button>
+                    <button onClick={onClose} className="">Cancel</button>
                 </Space>
                 }
             >
 
                 {/* Main wrapper */}
-                <div className="h-full w-full overflow-y-auto hover:overflow-y-scroll flex space-x-2">
+                <div className="h-full w-full overflow-y-hidden flex space-x-2">
                     {/* DE detail area */}
                     <div className="h-full w-1/2 overflow-y-auto p-2">
                         {/*Header section  */}
                         <div className="flex items-center p-2 shadow-sm bg-white rounded-md">
-                            {/* <h4 className="text-lg font-semibold">Demande D'explication</h4> */}
-                            {/* <div className="flex justify-between items-center space-x-3">
-                                <button className="text-blue-500 flex items-center space-x-2">
-                                    Repondre{" "}
-                                    <ArrowUturnRightIcon class="h-3 w-3 text-blue-500" />
-                                </button>
-                                <button className="text-yellow-500 flex items-center space-x-2">
-                                    Interpeler un témoins{" "}
-                                    <UserPlusIcon class="h-3 w-3 text-yellow-500" />
-                                </button>
-                                <button className="text-red-500 flex items-center space-x-2">
-                                    Proposer une sanction{" "}
-                                    <ShieldExclamationIcon class="h-3 w-3 text-red-500" />
-                                </button>
-                                <button className="text-green-500 flex items-center space-x-2">
-                                    Faire une requette{" "}
-                                    <ReceiptRefundIcon class="h-3 w-3 text-green-500" />
-                                </button>
-                            </div> */}
+                            
                         </div>
 
                         {/* Content section */}
@@ -670,7 +741,7 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
                         title={`Toutes les interpélations (${actualRequest?.temoins?.length})`} 
                         className="m-y-2"
                         >
-                            {actualRequest?.reponse?.map((data)=>
+                            {actualRequest?.temions?.map((data)=>
                                     (
                                         <DetailCard
                                             borderColor={`border-l-yellow-500 my-1`}
@@ -686,7 +757,12 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
                         <div>
                             {
                                 temoinFormIsOpenned && 
-                                <TemoinsForm temoins={receivers}/>
+                                <TemoinsForm 
+                                    temoins={receivers}
+                                    selectedOption={setSelectedOptions}
+                                    onSubmit={handleChooseWitness}
+                                    onChange={handleChange}
+                                />
                             }
                         </div>
                         <div className="flex justify-end items-center space-x-2 mt-2">
