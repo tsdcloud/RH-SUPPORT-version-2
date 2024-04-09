@@ -46,6 +46,7 @@ class ResponseListView(APIView):
 
                     update_data = {
                         "id": demande_data['id'],
+                        'user_id':demande_data['user_id'],
                         "uuid": demande_data['uuid'],
                         "code_de": demande_data['code_de'],
                         "employer_initiateur": demande_data['employer_initiateur'],
@@ -57,7 +58,6 @@ class ResponseListView(APIView):
                         "active": True
                     }
                     update_response = requests.put(demande_url, data=update_data)
-
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     

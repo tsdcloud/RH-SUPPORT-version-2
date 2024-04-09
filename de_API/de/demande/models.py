@@ -11,6 +11,7 @@ from datetime import timedelta
 
 class DemandeExplication(models.Model):
     uuid = models.CharField(max_length=100, null=False, default=uuid.uuid4)
+    user_id = models.CharField(max_length=100, default=None)
     code_de = models.CharField(max_length=100, null=False)
     employer_initiateur = models.CharField(max_length=100, null=False)
     employer_recepteur = models.CharField(max_length=100, null=False)

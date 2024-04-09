@@ -21,6 +21,11 @@ DE_SANCTION_STATUT = [
     ('2', 'validation'),
 ]
 
+def getUser(token: str):
+    url = END_POINT+"/users/account"
+    res = requests.get(url=url, headers={"Authorization": f"Bearer {token}"})
+    return res.json()
+
 
 def getEntities(token: str):
     url = END_POINT+"/firme"

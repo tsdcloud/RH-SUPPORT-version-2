@@ -1,14 +1,20 @@
 import { Table, Modal, Dropdown, Drawer, Space, Button, Collapse, Badge, notification } from 'antd'
-import React, {useEffect, useState, useMemo} from 'react'
+import React, {useEffect, useState, useMemo, useContext} from 'react'
 import { useLocation, Link, useParams, useNavigate } from 'react-router-dom';
 import { PlusIcon, EllipsisHorizontalIcon,UserPlusIcon, ShieldExclamationIcon, ReceiptRefundIcon, ArrowUturnRightIcon } from '@heroicons/react/24/outline'
 import ReponseForm from '../../components/Reponse/ReponseForm.jsx';
 import TemoinsForm from '../../components/Temoins/TemoinsForm.jsx';
+import SanctionForm from '../../components/Sanction/SanctionForm.jsx';
 import ExplicationDetails from '../../components/ExplicationDetails/ExplicationDetails.jsx';
 import CollapsibleComponent from '../../components/CollapsibleComponent/CollapsibleComponent.jsx';
 import DetailCard from '../../components/DetailCard/DetailCard.jsx';
 import SecondaryTabs from '../../components/Tab/SecondaryTabs.js'
 import TabsWrapper from '../../components/Tabs/TabsWrapper.js'
+
+import{AUTHCONTEXT} from '../../context/AuthContext.js'
+
+import {useFetch} from '../../hooks/useFetch'
+import {usePost} from '../../hooks/usePost'
 
 
 
@@ -38,8 +44,14 @@ const openNotification = () => {
 
 function DemandeExplication() {
 
+    const { setUser, user } = useContext(AUTHCONTEXT);
+    const { isLoading, error, fetchData } = useFetch();
+    const { responseData, postData } = usePost();
+
     const {id} = useParams();
     const navigate = useNavigate();
+
+
 
     const [count, setCount] = useState(0)
     const[isOpenned, setIsOpenned]=useState(false);
@@ -47,7 +59,7 @@ function DemandeExplication() {
     const [actualRequest, setActualRequest] = useState({})
     const [dataSource, setDataSource] = useState([]);
     const _USER = localStorage.getItem('user');
-    const userEntity = JSON.parse(localStorage.getItem('user'))?.entity[0].id;
+    const userEntity = JSON.parse(localStorage.getItem('user'))?.entity[1].id;
     const [path, setPath] = useState("explanation");
     const [receiverLoading, setReceiverLoading] = useState(true);
     const [motifLoading, setMotifLoading] = useState(true);
@@ -62,6 +74,8 @@ function DemandeExplication() {
     const [receivers, setReceivers] = useState([]);
     const [receiver, setReceiver] = useState([]);
     const [motif, setMotif] = useState('');
+    const [sanction, setSanction] = useState('');
+    const [sanctions, setSanctions] = useState([]);
     const [description, setDescription] = useState(
 `Madame/Monsieur,
 Il a été donné de constater que ...
@@ -113,6 +127,7 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
         setPath(path)
         // console.log(location.pathname);
     };
+
 
     const columns = [
           {
@@ -229,7 +244,7 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
        let url = `/api?end=demandes&termination=demande&detail=1&pid=${id}`
        let response = await fetch(url, { 
          method: "GET",
-         headers: headersList
+         headers: headersList   
        });
        
        let res = await response.json();
@@ -237,6 +252,7 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
        if(res.status === 200){
         setActualRequest(res);
         setOpen(true);
+        handleFetchSanctions();
         // setDataSource(res.results);
        }
     }
@@ -273,6 +289,7 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
     const handleOpenDetail=(id)=>{
         setOpen(true);
         handleFetchDE(id);
+
     }
 
     /**
@@ -289,15 +306,16 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
         };
         const response = await fetch(url, RequestInfo);
         const result = await response.json();
+        console.log(result);
         if(response.ok){
             let data = result?.results;
             const actualUser = await data.filter(users => users.user.id === JSON.parse(_USER).id);
             const withoutUser = await  data
                                         .filter(users => users.user.id !== JSON.parse(_USER).id)
                                         .filter(users => users.rank.power >= actualUser[0].rank.power);
-
             setReceivers(await withoutUser);
-            await setReceiverLoading(false);
+            console.log(await withoutUser)
+            setReceiverLoading(false);
             return withoutUser;
         }
         return [];
@@ -399,6 +417,20 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
         }
         
     }
+
+    const handleFetchSanctions=()=>{
+        fetchData("/api?end=demandes&termination=sanction&detail=0")
+        .then(data=>{
+            console.log("SANCTION :", data);
+            setSanctions(data);
+        })
+        // const data = await fetchData("/api?end=demandes&termination=sanction&detail=0")
+    }
+
+    const handleProposeSanction=()=>{
+        handleFetchAllDE();
+        setOpen(false);
+    }
     
 
     useEffect(()=>{
@@ -487,7 +519,7 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
                     />
                     <SecondaryTabs 
                         title={`En attente de réponse (${data.filter(de=>de.statut_de == 1).length})`}
-                        onClick={async() =>{ 
+                        onClick={async() =>{
                             let repondue = data.filter(de=>de.statut_de == 1)
                             setDataSource(repondue);
                             handleTabClick("response");
@@ -522,16 +554,6 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
                     footer={()=><></>}
                 >
                         <form onSubmit={handleSaveDE} className='px-2 space-y-2 w-full flex flex-col justify-center h-[400px] max-h-[400px] overflow-y-scroll'>
-                            {/* Type the of demandes */}
-                            {/* <select 
-                            value={typeDE}
-                            onChange={e=>setTypeDE(e.target.value)}
-                            className={'border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0'}>
-                                <option value={TYPE_DE.init}>Initier une demande d'explanation</option>
-                                <option value={TYPE_DE.upload}>Téléverser une demande d'explication</option>
-                            </select> */}
-
-                            {/* Receiver */}
                             <select 
                                 className={`${receiverLoading?'border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0 bg-gray-100' :'border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0'} text-md`} 
                                 disabled={receiverLoading}
@@ -575,7 +597,7 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
                                 <option value="">Motifs</option>
                                 {
                                     motifs.map((motif)=>
-                                        <option value={motif.uuid} key={motif.uuid}>{motif.nom}</option>
+                                        <option value={motif.uuid} key={motif.nom}>{motif.nom}</option>
                                     )
                                 }
                             </select>  
@@ -791,6 +813,12 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
                                 )
                             }
                         </CollapsibleComponent>
+                        <SanctionForm 
+                            sanctions={sanctions}
+                            explanation={actualRequest.uuid}
+                            employee={JSON.parse(_USER).id}
+                            onSubmit={handleProposeSanction}
+                        />
                     </div>
                 </div>
             </Drawer>

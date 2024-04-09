@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.exceptions import APIException                                                  
-from .models import Temoins
+from .models import Temoin
 import datetime
 import uuid
 
@@ -8,7 +8,7 @@ class TemoinsSerializerDetail(serializers.ModelSerializer):
     uuid = serializers.CharField(read_only=True)
     # motif = serializers.CharField(read_only =True)
     class Meta:
-        model = Temoins
+        model = Temoin
         fields = '__all__'
     
     def create(self, validated_data):
@@ -37,6 +37,6 @@ class TemoinsSerializerDetail(serializers.ModelSerializer):
 class TemoinsSerializer(serializers.ModelSerializer):
     uuid = serializers.CharField(read_only=True)
     class Meta:
-        model = Temoins
+        model = Temoin
         fields = '__all__'
     

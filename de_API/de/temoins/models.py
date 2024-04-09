@@ -2,7 +2,7 @@ from django.db import models
 import uuid
 # Create your models here.
 
-class Temoins(models.Model):
+class Temoin(models.Model):
     uuid = models.CharField(max_length=100, default=uuid.uuid4)
     id_employe = models.CharField(max_length=100)
     id_de = models.CharField(max_length=100)

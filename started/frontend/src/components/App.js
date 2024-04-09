@@ -9,6 +9,8 @@ import DemandeExplication from "../pages/DemandeExplication/DemandeExplication";
 import TopBar from "./topBar/TopBar";
 import AuthProvider from "../context/AuthContext";
 import { AUTHCONTEXT } from "../context/AuthContext";
+import Sanctions from "../pages/Sanctions/Sanctions.jsx";
+import Archives from "../pages/Archives/Archives.jsx";
 
 
 export default function App() {
@@ -25,13 +27,17 @@ export default function App() {
           <Route path="*" element={<h2 className="text-2xl">404 NOT FOUND</h2>} />
           <Route path="dashboard" element={<h2 className="text-2xl">Home page</h2>} />
           <Route path="explanation" element={<DemandeExplication />} />
-          <Route path="explanation/:id" element={<DemandeExplication />} />
+          <Route path="sanction" element={<Sanctions />} />
+          <Route path="archives" element={<Archives />} />
         </Routes>
       </Router>
     // <h5>Something</h5>
   )
 }
 
+if(module.hot){
+  module.hot.accept()
+}
 
 
 const appDiv = document.getElementById("app");

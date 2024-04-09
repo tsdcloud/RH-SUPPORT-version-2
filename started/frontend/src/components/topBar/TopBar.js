@@ -6,7 +6,8 @@ import { CogIcon } from '@heroicons/react/24/solid';
 
 function TopBar() {
   
-  const {user} = useContext(AUTHCONTEXT);
+  // const {user} = useContext(AUTHCONTEXT);
+  const [user, setUser] = useState(localStorage.getItem('user'))
   const [profile, setProfile] = useState({})
 
   useEffect(()=>{
@@ -18,8 +19,9 @@ function TopBar() {
     <div className='relative w-full px-4 bg-blue-500 py-2 shadow-md flex justify-between items-center'>
         <h3 className='text-white font-semibold'>RH Support</h3>
         <div className='flex items-center space-x-1'>
-          <div className='borber-l-[1px] borber-r-[1px] border-white px-2'>
-            <BellIcon className="h-4 w-4 text-white rotate-1" />
+          <div className='borber-l-[1px] borber-r-[1px] border-white px-2 relative'>
+            <BellIcon className="h-5 w-5 text-white rotate-1" />
+            <div className='p-1 bg-red-500 rounded-full absolute right-2 top-0'></div>
           </div>
           <div className='flex items-center space-x-2 border-l-[1px] border-white'>
             {/* <div className='p-3 rounded-full bg-gray-500'></div> */}

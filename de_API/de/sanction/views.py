@@ -1,25 +1,56 @@
+import json
 from rest_framework.views import APIView, status
 from rest_framework.response import Response
 from django.http import Http404
-from .serializers import SanctionSerializer, SanctionSerializerDetail
-from .models import Sanction
+from .serializers import SanctionSerializer, SanctionSerializerDetail, MotifsSanctionSerializer, MotifsSanctionSerializerDetail
+from .models import Sanction, MotifSanction
 
 
 class SanctionListView(APIView):
     """
-    List all Response, Create a new Response, Update a Response and Delete a Response
+    List all Sanctions, filtering by query parameters if provided,
+    including related MotifSanctions.
     """
-    def get(self, request,  format=None):
-        response = Sanction.objects.all()
-        serializer = SanctionSerializer(response, many=True)
+    def get(self, request, format=None):
+        queryset = Sanction.objects.filter(active=True)  # Base queryset
+        motifSanction = []
+
+        # Filter by query parameters if they exist
+        if request.query_params:
+            filters = {}
+            for key, value in request.query_params.items():
+                filters[key] = value
+            queryset = queryset.filter(**filters)
+
+        # Include related MotifSanctions and return updated list
+        # updated_sanctions = []
+        # for sanction in queryset:
+        #     motifs = MotifSanction.objects.filter(sanction_id=sanction.uuid)
+        #     sanction.motifs = motifs  
+        #     print(sanction.motifs)
+        #     # serializer = SanctionSerializerDetail(sanction)
+        #     updated_sanctions.append(sanction)
+        #     print(updated_sanctions)
+
+        serializer = SanctionSerializerDetail(queryset, many=True)
+        return Response(serializer.data)
+
         return Response(serializer.data)
     
     def post(self, request, format=None):
         serializer = SanctionSerializer(data=request.data, many=False, context={'request': request})
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            if "motifs" in request.data:
+                sanction = serializer.save()
+                sanction_id = sanction.uuid
+                data = request.data.get("motifs")
+                for motif in data:
+                    motif_serializer = MotifsSanctionSerializer(data=[{"motif_id":motif, "sanction_id":str(sanction_id)}], many=True)
+                    if motif_serializer.is_valid():
+                        motif_serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     
 
 class SanctionDetail(APIView):
