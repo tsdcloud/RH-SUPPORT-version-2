@@ -24,9 +24,10 @@ function Archives() {
     const handleAddSanction =()=>{
         fetchData("/api?end=demandes&termination=sanction&detail=0")
         .then(res => {
-            console.log(res);
-            setTableData(res);
-            setDataSource(res);
+          let deArchiver = res?.filter(data=> data.statut_de === "4");
+            console.log(deArchiver);
+            setTableData(deArchiver);
+            setDataSource(deArchiver);
         }); 
     }
 
@@ -34,9 +35,9 @@ function Archives() {
         {
             title: '#',
             width: "150px",
-            render:(record)=>(
-                <>{dataSource.indexOf(record)+1}</>
-            )
+            render:(record)=>{
+              return <>{dataSource.indexOf(record)+1}</>
+            }
           },
           {
             title: 'No Ref',
@@ -47,31 +48,21 @@ function Archives() {
             title: 'Motifs',
             dataIndex: 'motif',
             key: 'motif',
-            render:(record, text)=>{
-                let motifName = motifs.find(motif => motif.uuid === text.motif )
-                console.log(motifName?.nom);
-                return <p>{motifName?.nom}</p>
-            }
+            // render:(record, text)=>{
+            //     let motifName = motifs.find(motif => motif.uuid === text.motif )
+            //     console.log(motifName?.nom);
+            //     return <p>{motifName?.nom}</p>
+            // }
           },
           {
             title: 'Destinataire',
             dataIndex: 'employer_recepteur',
-            key: 'employer_recepteur',
-            // render:((text)=>{
-            //     let destinataire = receivers.filter(receiver=>receiver.id == text)
-            //     console.log(receivers)
-            //     return <>{destinataire}</>
-            // })
+            key: 'employer_recepteur'
           },
           {
             title: 'Initiateur',
             dataIndex: 'employer_initiateur',
-            key: 'employer_initiateur',
-            // render:((text)=>{
-            //     let destinataire = receivers.filter(receiver=>receiver.id == text)
-            //     console.log(receivers)
-            //     return <>{destinataire}</>
-            // })
+            key: 'employer_initiateur'
           },
           {
             title: 'Date initiation',
@@ -82,7 +73,7 @@ function Archives() {
           {
             title: 'Actions',
             width:"100px",
-            render:(record, text)=><EllipsisHorizontalIcon onClick={()=>handleOpenDetail(record.uuid)} className="h-8 w-8 text-gray-500 cursor-pointer" />
+            // render:(record, text)=><EllipsisHorizontalIcon onClick={()=>handleOpenDetail(record.uuid)} className="h-8 w-8 text-gray-500 cursor-pointer" />
           }
     ]
     const columns =[
@@ -117,12 +108,12 @@ function Archives() {
     
     useEffect(()=>{
         handleAddSanction();
-        // fetchData("/api?end=demandes&termination=sanction&detail=0")
-        // .then(res => {
-        //     console.log(res);
-        //     setTableData(res);
-        //     setDataSource(res);
-        // });   
+        fetchData("/api?end=demandes&termination=demande&detail=0")
+        .then(res => {
+            console.log(res);
+            setTableData(res);
+            setDataSource(res);
+        });   
         
     }, []);
 
@@ -145,7 +136,7 @@ function Archives() {
             className=""
         >
             <SecondaryTabs 
-                title={`Toutes les DEs (${dataSource.length})`}
+                title={`Toutes les DEs`}
                 onClick={() =>{ 
                     // setDataSource(data)
                     handleTabClick("demande");
@@ -153,7 +144,7 @@ function Archives() {
                 isActive={path === 'demande'} 
             />
             <SecondaryTabs 
-                title={`Toutes les Demande Permission (${dataSource.length})`}
+                title={`Toutes les Demande Permission (0)`}
                 onClick={() =>{ 
                     // setDataSource(data)
                     handleTabClick("permission");
@@ -161,7 +152,7 @@ function Archives() {
                 isActive={path === 'permission'} 
             />
             <SecondaryTabs 
-                title={`Toutes les Demande d'AVI (${dataSource.length})`}
+                title={`Toutes les Demande d'AVI (0)`}
                 onClick={() =>{ 
                     // setDataSource(data)
                     handleTabClick("avi");
@@ -172,7 +163,7 @@ function Archives() {
 
         <Table 
             loading={false}
-            dataSource={[]}
+            dataSource={dataSource.filter(de=>de.statut_de == 4)}
             columns={deCol}
             pagination={{
                 pageSize: 50,

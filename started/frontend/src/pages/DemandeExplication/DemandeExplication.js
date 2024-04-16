@@ -93,6 +93,13 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
     
     const [open, setOpen] = useState(false);
 
+
+    const [showSanctionButton, setShowSanctionButton] = useState(false);
+    
+    const handleShowSanctionForm=()=>{
+        setShowSanctionButton(!showSanctionButton);
+    }
+
     const showDrawer = () => {
         setOpen(true);
     };
@@ -693,7 +700,7 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
                 open={open}
                 extra={
                 <Space>
-                    <button onClick={onClose} className="">Cancel</button>
+                    <button onClick={onClose} className="p-2 border-2 border-red-500 text-red-500 shadow-sm rounded-lg">Cancel</button>
                 </Space>
                 }
             >
@@ -813,12 +820,20 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
                                 )
                             }
                         </CollapsibleComponent>
-                        <SanctionForm 
+                        {showSanctionButton && <SanctionForm 
                             sanctions={sanctions}
                             explanation={actualRequest.uuid}
                             employee={JSON.parse(_USER).id}
                             onSubmit={handleProposeSanction}
-                        />
+                        />}
+                        <div className="flex justify-end items-center">
+                            {
+                            showSanctionButton?
+                                <button className="px-2 py-1 bg-red-500 text-xs text-white rounded-md" onClick={handleShowSanctionForm}>Annuler</button>
+                                    :
+                                <button className="px-2 py-1 bg-blue-500 text-xs text-white rounded-md" onClick={handleShowSanctionForm}>Proposer une sanction</button>
+                            }
+                        </div>
                     </div>
                 </div>
             </Drawer>
