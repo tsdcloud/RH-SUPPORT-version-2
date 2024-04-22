@@ -10,7 +10,9 @@ import CollapsibleComponent from '../../components/CollapsibleComponent/Collapsi
 import DetailCard from '../../components/DetailCard/DetailCard.jsx';
 import SecondaryTabs from '../../components/Tab/SecondaryTabs.js'
 import TabsWrapper from '../../components/Tabs/TabsWrapper.js'
-
+import PageHeader from '../../components/Header/PageHeader.jsx'
+import TabsComponent from '../../components/TabsComponents/TabsComponent.jsx'
+import Tab from '../../components/TabsComponents/Tab.jsx'
 import{AUTHCONTEXT} from '../../context/AuthContext.js'
 
 import {useFetch} from '../../hooks/useFetch'
@@ -186,7 +188,7 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
             width:"150px",
           },
           {
-            title: 'Statut',
+            title: 'Délais',
             dataIndex: 'statut_de',
             key: 'date_init',
             render:(text)=>(
@@ -472,35 +474,17 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
     
     
   return (
-    <>
-        <div className='p-5'>
-
-            <div className='flex justify-between px-4'>
-                <div className='relative w-4/5'>
-                    <input 
-                        className=' px-2 py-1 border-[1px] border-gray-200 text-gray-800 rounded-lg text-sm focus:outline-0 w-2/5' 
-                        type='search' 
-                        placeholder='Recherche'
-                        value={searchDE}
-                        onChange={e=>setSearchDE(e.target.value)}
-                    />
-                </div>
-                <div className='flex items-center space-x-1'>
-                    <button 
-                        className='p-2 shadow-sm rounded-md bg-blue-600 text-white text-sm flex items-center justify-center space-x-2'
-                        onClick={()=>{setIsOpenned(true)}}>
-                        <PlusIcon class="h-4 w-4 text-white" />
-                        Initier une demande
-                    </button>
-                </div>
-            </div>
-
-            {/* Demande explication content */}
-            <div className='p-4'>
-                <TabsWrapper
-                    className=""
-                >
-                    <SecondaryTabs 
+    <div className='p-5 space-y-2'>
+        <PageHeader
+            inputPlaceholder={"Rechercher"}
+            onButtonClick={()=>setIsOpenned(true)}
+            buttonText={"Initier une demande"}
+            onSearch={e=>setSearchDE(e.target.value)}
+        />
+        <div className='p-3 border-2 border-grey-200 rounded-md flex justify-between items-center'>
+            <div className='w-full'>
+                <TabsComponent className="">
+                    <Tab 
                         title={`Toutes les DE (${data.length})`}
                         onClick={() =>{ 
                             setDataSource(data)
@@ -508,23 +492,23 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
                         }}
                         isActive={path === 'explanation'} 
                     />
-                    <SecondaryTabs 
+                    {/* <Tab 
                         title={`Initier (${data.filter(de=>de.user_id === JSON.parse(_USER).id).length})`}
                         onClick={() =>{ 
                             setDataSource(data.filter(de=>de.user_id === JSON.parse(_USER).id))
                             handleTabClick("initier");
                         }}
                         isActive={path === 'initier'} 
-                    />
-                    <SecondaryTabs 
+                    /> */}
+                    <Tab 
                         title={`reçu (${data.filter(de=>de.user_id !== JSON.parse(_USER).id).length})`}
                         onClick={() =>{ 
                             setDataSource(data.filter(de=>de.user_id !== JSON.parse(_USER).id))
                             handleTabClick("received");
                         }}
-                        isActive={path === 'received'} 
+                        isActive={path === 'received'}
                     />
-                    <SecondaryTabs 
+                    <Tab 
                         title={`En attente de réponse (${data.filter(de=>de.statut_de == 1).length})`}
                         onClick={async() =>{
                             let repondue = data.filter(de=>de.statut_de == 1)
@@ -533,7 +517,7 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
                         }}
                         isActive={path === 'response'} 
                     />
-                    <SecondaryTabs 
+                    <Tab 
                         title={`En attente de témoins (${data.filter(de=>de.statut_de == 3).length})`}
                         onClick={() =>{ 
                             let repondue = data.filter(de=>de.statut_de == 3)
@@ -542,303 +526,336 @@ Vous voudriez bien nous expliquer dans un délai de 72h dès réception de la pr
                         }}
                         isActive={path === 'witness'} 
                     />
-                    <SecondaryTabs 
+                    <Tab 
                         title={`En attente de proposition (${data.filter(de=>de.statut_de == 2).length})`}
                         onClick={() =>{ 
                             let repondue = data.filter(de=>de.statut_de == 2)
                             setDataSource(repondue);
                             handleTabClick("sanction");
                         }}
-                        isActive={path === 'sanction'} 
+                        isActive={path === 'sanction'}
                     />
-                </TabsWrapper>
-
-                <Modal
-                    title="Initier une demande d'explication"
-                    centered
-                    open={isOpenned}
-                    onCancel={() => setIsOpenned(false)}
-                    footer={()=><></>}
-                >
-                        <form onSubmit={handleSaveDE} className='px-2 space-y-2 w-full flex flex-col justify-center h-[400px] max-h-[400px] overflow-y-scroll'>
-                            <select 
-                                className={`${receiverLoading?'border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0 bg-gray-100' :'border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0'} text-md`} 
-                                disabled={receiverLoading}
-                                value={receiver}
-                                onChange={e=>setReceiver(e.target.value)}
-                                >
-                                <option value="">Destinataire</option>
-                                {
-                                    receivers.map((users)=>(
-                                        <option key={users.user.id} value={users.user.id}>{`${users.user.member.first_name} ${users.user.member.last_name}`}</option>
-                                    ))
-                                }
-                            </select>
-
-                            {/* Initiator */}
-                            {
-                                typeDE == TYPE_DE.upload && 
-                                <>
-                                    <select 
-                                        className={receiverLoading?'border-[1px] bg-gray-100 border-gray-100 rounded-lg p-2 w-full focus:outline-0' :'border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0'} 
-                                        disabled={receiverLoading}
-                                        value={initiator}
-                                        onChange={e=>setInitiator(e.target.value)}
-                                        >
-                                        <option value="">Initiateur</option>
-                                    </select>
-                                    <div className=''>
-                                        <label className='' for="init_date">Date d'initiation :</label>
-                                        <input type="date" id="init_date" className="border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0"/>
-                                    </div>
-                                </>
-                            }
-
-                            {/* Motifs */}
-                            <select 
-                                className={`${motifLoading?'border-[1px] bg-gray-100 border-gray-100 rounded-lg p-2 w-full focus:outline-0' :'border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0'} text-md`} 
-                                disabled={motifLoading}
-                                value={motif}
-                                onChange={(e)=>setMotif(e.target.value)}
-                            >
-                                <option value="">Motifs</option>
-                                {
-                                    motifs.map((motif)=>
-                                        <option value={motif.uuid} key={motif.nom}>{motif.nom}</option>
-                                    )
-                                }
-                            </select>  
-
-                            {/* Justification */}
-                            <div className='p-2 w-full'>
-                                <label htmlFor="justif font-bold">Choisir un justif:</label>
-                                <input 
-                                type='file' 
-                                id="justif"
-                                className='border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0' 
-                                placeholder='Ajouter une piece Jointe'/>             
-                            </div>
-
-
-                            {/* The mannual demande d'explication */}
-                            {
-                                typeDE == TYPE_DE.upload && 
-                                <div className='p-2 w-full'>
-                                    <div className='rounded-lg w-full '>
-                                        <label htmlFor="demande_file">Televerser la demande:</label>             
-                                    </div>
-                                    <input 
-                                    type='file' 
-                                    id="demande_file"
-                                    className='border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0' 
-                                    placeholder='Ajouter une piece Jointe'/>
-                                </div>
-                            }
-
-                            {/* Description */}
-                            <textarea 
-                                className='border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0'
-                                placeholder='Descriptions'
-                                rows="5"
-                                value={description}
-                                onChange={e=>setDescription(e.target.value)}
-                            >
-                            </textarea>
-                            <div className="">
-                                <button className="text-white font-md bg-blue-500 p-2 rounded-lg" type="submit">
-                                    <span>Initier la demande</span>
-                                </button>
-                            </div>
-                        </form>
-                    <div className="w-full">
-                    </div>
-                </Modal>
+                    <Tab 
+                        title={`En attente de décission (${data.filter(de=>de.statut_de == 2).length})`}
+                        onClick={() =>{ 
+                            let repondue = data.filter(de=>de.statut_de == 2)
+                            setDataSource(repondue);
+                            handleTabClick("sanction");
+                        }}
+                        isActive={path === 'sanction'}
+                    />
+                    <Tab 
+                        title={`En attente de notification (${data.filter(de=>de.statut_de == 2).length})`}
+                        onClick={() =>{ 
+                            let repondue = data.filter(de=>de.statut_de == 2)
+                            setDataSource(repondue);
+                            handleTabClick("sanction");
+                        }}
+                        isActive={path === 'sanction'}
+                    />
+                    <Tab 
+                        title={`Archives (${data.filter(de=>de.statut_de == 2).length})`}
+                        onClick={() =>{ 
+                            let repondue = data.filter(de=>de.statut_de == 2)
+                            setDataSource(repondue);
+                            handleTabClick("sanction");
+                        }}
+                        isActive={path === 'sanction'}
+                    />
+                </TabsComponent>
                 <Table 
                     loading={deIsLoading}
                     dataSource={dataSource}
                     columns={columns}
                     pagination={{
                         pageSize: 50,
-                      }}
-                      scroll={{
+                    }}
+                    scroll={{
                         y: 200,
                         x: 500
-                      }}
+                    }}
                 />
             </div>
+        </div>
 
+        {/* Demande explication content */}
+        <div className='p-4'>
+            
 
-
-            {/* DE initiation drawer */}
-            <Drawer
-                title="Demande d'explication"
-                placement="bottom"
-                width={1000}
-                height={600}
-                onClose={() => setIsOpenned(false)}
-                open={false}
-                extra={
-                <Space>
-                    <Button onClick={onClose} className="">Cancel</Button>
-                </Space>
-                }
+            <Modal
+                title="Initier une demande d'explication"
+                centered
+                open={isOpenned}
+                onCancel={() => setIsOpenned(false)}
+                footer={()=><></>}
             >
-                
+                    <form onSubmit={handleSaveDE} className='px-2 space-y-2 w-full flex flex-col justify-center h-[400px] max-h-[400px] overflow-y-scroll'>
+                        <select 
+                            className={`${receiverLoading?'border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0 bg-gray-100' :'border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0'} text-md`} 
+                            disabled={receiverLoading}
+                            value={receiver}
+                            onChange={e=>setReceiver(e.target.value)}
+                            >
+                            <option value="">Destinataire</option>
+                            {
+                                receivers.map((users)=>(
+                                    <option key={users.user.id} value={users.user.id}>{`${users.user.member.first_name} ${users.user.member.last_name}`}</option>
+                                ))
+                            }
+                        </select>
 
-            </Drawer>
+                        {/* Initiator */}
+                        {
+                            typeDE == TYPE_DE.upload && 
+                            <>
+                                <select 
+                                    className={receiverLoading?'border-[1px] bg-gray-100 border-gray-100 rounded-lg p-2 w-full focus:outline-0' :'border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0'} 
+                                    disabled={receiverLoading}
+                                    value={initiator}
+                                    onChange={e=>setInitiator(e.target.value)}
+                                    >
+                                    <option value="">Initiateur</option>
+                                </select>
+                                <div className=''>
+                                    <label className='' for="init_date">Date d'initiation :</label>
+                                    <input type="date" id="init_date" className="border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0"/>
+                                </div>
+                            </>
+                        }
 
+                        {/* Motifs */}
+                        <select 
+                            className={`${motifLoading?'border-[1px] bg-gray-100 border-gray-100 rounded-lg p-2 w-full focus:outline-0' :'border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0'} text-md`} 
+                            disabled={motifLoading}
+                            value={motif}
+                            onChange={(e)=>setMotif(e.target.value)}
+                        >
+                            <option value="">Motifs</option>
+                            {
+                                motifs.map((motif)=>
+                                    <option value={motif.uuid} key={motif.nom}>{motif.nom}</option>
+                                )
+                            }
+                        </select>  
 
-
-
-            {/* Drawer details drawer*/}
-            <Drawer
-                title="Demande d'explication"
-                placement="bottom"
-                width={1000}
-                height={600}
-                onClose={onClose}
-                open={open}
-                extra={
-                <Space>
-                    <button onClick={onClose} className="p-2 border-2 border-red-500 text-red-500 shadow-sm rounded-lg">Cancel</button>
-                </Space>
-                }
-            >
-
-                {/* Main wrapper */}
-                <div className="h-full w-full overflow-y-hidden flex space-x-2">
-                    {/* DE detail area */}
-                    <div className="h-full w-1/2 overflow-y-auto p-2">
-                        {/*Header section  */}
-                        <div className="flex items-center p-2 shadow-sm bg-white rounded-md">
-                            
+                        {/* Justification */}
+                        <div className='p-2 w-full'>
+                            <label htmlFor="justif font-bold">Choisir un justif:</label>
+                            <input 
+                            type='file' 
+                            id="justif"
+                            className='border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0' 
+                            placeholder='Ajouter une piece Jointe'/>             
                         </div>
 
-                        {/* Content section */}
-                        <div className="shadow-sm p-2 mt-3 rounded-sm">
-                            <ExplicationDetails
-                                code={actualRequest.code_de}
-                                dateInit={actualRequest.date_init}
-                                initiateur={actualRequest.employer_initiateur}
-                                motif={motifs.find(motif => motif.uuid === actualRequest.motif)?.nom}
-                                description={actualRequest.description}
-                            />
+
+                        {/* The mannual demande d'explication */}
+                        {
+                            typeDE == TYPE_DE.upload && 
+                            <div className='p-2 w-full'>
+                                <div className='rounded-lg w-full '>
+                                    <label htmlFor="demande_file">Televerser la demande:</label>             
+                                </div>
+                                <input 
+                                type='file' 
+                                id="demande_file"
+                                className='border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0' 
+                                placeholder='Ajouter une piece Jointe'/>
+                            </div>
+                        }
+
+                        {/* Description */}
+                        <textarea 
+                            className='border-[1px] border-gray-100 rounded-lg p-2 w-full focus:outline-0'
+                            placeholder='Descriptions'
+                            rows="5"
+                            value={description}
+                            onChange={e=>setDescription(e.target.value)}
+                        >
+                        </textarea>
+                        <div className="">
+                            <button className="text-white font-md bg-blue-500 p-2 rounded-lg" type="submit">
+                                <span>Initier la demande</span>
+                            </button>
                         </div>
+                    </form>
+                <div className="w-full">
+                </div>
+            </Modal>
+            
+        </div>
+
+
+
+        {/* DE initiation drawer */}
+        <Drawer
+            title="Demande d'explication"
+            placement="bottom"
+            width={1000}
+            height={600}
+            onClose={() => setIsOpenned(false)}
+            open={false}
+            extra={
+            <Space>
+                <Button onClick={onClose} className="">Cancel</Button>
+            </Space>
+            }
+        >
+            
+
+        </Drawer>
+
+
+
+
+        {/* Drawer details drawer*/}
+        <Drawer
+            title="Demande d'explication"
+            placement="bottom"
+            width={1000}
+            height={600}
+            onClose={onClose}
+            open={open}
+            extra={
+            <Space>
+                <button onClick={onClose} className="p-2 border-2 border-red-500 text-red-500 shadow-sm rounded-lg">Cancel</button>
+            </Space>
+            }
+        >
+
+            {/* Main wrapper */}
+            <div className="h-full w-full overflow-y-hidden flex space-x-2">
+                {/* DE detail area */}
+                <div className="h-full w-1/2 overflow-y-auto p-2">
+                    {/*Header section  */}
+                    <div className="flex items-center p-2 shadow-sm bg-white rounded-md">
+                        
                     </div>
-                    <span className="h-full w-[1px] bg-gray-200"></span>
-                    
-                    {/* List and Forms section */}
-                    <div className="h-full w-1/2 overflow-y-auto hover:overflow-y-scroll p-2 space-y-2">
 
-                        {/* Reponse collapse */}
-                        <CollapsibleComponent 
-                        title={`Toutes les réponses (${actualRequest?.reponse?.length})`} 
-                        className="m-y-2"
-                        >
-                            {actualRequest?.reponse?.map((data)=>
-                                    (
-                                        <DetailCard
-                                            borderColor={`border-l-blue-500 my-1`}
-                                            name={data.id_employe}
-                                            description={data.commentaire_reponse}
-                                            date={data.date_init}
-                                        /> 
-                                    )
-                                )
-                            }
-                        </CollapsibleComponent>
-                        <div>
-                            {
-                                reponseFormIsOpenned && 
-                                <ReponseForm 
-                                    onSave={handleOnReponseSaved}
-                                    demande={actualRequest.uuid}
-                                />
-                            }
-                        </div>
-                        <div className="flex justify-end items-center space-x-2 mt-2">
-                            {
-                                reponseFormIsOpenned?
-                                    <button className="px-2 py-1 bg-red-500 text-xs text-white rounded-md" onClick={()=>setReponseFormIsOpenned(false)}>Annuler</button>
-                                :
-                                    <button className="px-2 py-1 bg-blue-500 text-xs text-white rounded-md" onClick={()=>setReponseFormIsOpenned(true)}>Repondre</button>
-                            }
-                        </div>
-
-                        {/* Toutes les interpélations */}
-                        <CollapsibleComponent 
-                        title={`Toutes les interpélations (${actualRequest?.temoins?.length})`} 
-                        className="m-y-2"
-                        >
-                            {actualRequest?.temions?.map((data)=>
-                                    (
-                                        <DetailCard
-                                            borderColor={`border-l-yellow-500 my-1`}
-                                            name={data.id_employe}
-                                            description={data.commentaire_reponse}
-                                            date={data.date_init}
-                                        /> 
-                                    )
-                                )
-                            }
-                           
-                        </CollapsibleComponent>
-                        <div>
-                            {
-                                temoinFormIsOpenned && 
-                                <TemoinsForm 
-                                    temoins={receivers}
-                                    selectedOption={setSelectedOptions}
-                                    onSubmit={handleChooseWitness}
-                                    onChange={handleChange}
-                                />
-                            }
-                        </div>
-                        <div className="flex justify-end items-center space-x-2 mt-2">
-                            {
-                                temoinFormIsOpenned?
-                                    <button className="px-2 py-1 bg-red-500 text-xs text-white rounded-md" onClick={()=>setTemoinFormIsOpenned(false)}>Annuler</button>
-                                :
-                                    <button className="px-2 py-1 bg-blue-500 text-xs text-white rounded-md" onClick={()=>setTemoinFormIsOpenned(true)}>Interpeler un témoin</button>
-                            }
-                        </div>
-
-                        {/* Toutes les sanctions */}
-                        <CollapsibleComponent 
-                        title={`Toutes les sanctions (${actualRequest?.propositions?.length})`} 
-                        className="m-y-2"
-                        >
-                            {actualRequest?.propositions?.map((data)=>
-                                    (
-                                        <DetailCard
-                                            borderColor={`border-l-yellow-500 my-1`}
-                                            name={data.id_employe}
-                                            description={data.commentaire_reponse}
-                                            date={data.date_init}
-                                        /> 
-                                    )
-                                )
-                            }
-                        </CollapsibleComponent>
-                        {showSanctionButton && <SanctionForm 
-                            sanctions={sanctions}
-                            explanation={actualRequest.uuid}
-                            employee={JSON.parse(_USER).id}
-                            onSubmit={handleProposeSanction}
-                        />}
-                        <div className="flex justify-end items-center">
-                            {
-                            showSanctionButton?
-                                <button className="px-2 py-1 bg-red-500 text-xs text-white rounded-md" onClick={handleShowSanctionForm}>Annuler</button>
-                                    :
-                                <button className="px-2 py-1 bg-blue-500 text-xs text-white rounded-md" onClick={handleShowSanctionForm}>Proposer une sanction</button>
-                            }
-                        </div>
+                    {/* Content section */}
+                    <div className="shadow-sm p-2 mt-3 rounded-sm">
+                        <ExplicationDetails
+                            code={actualRequest.code_de}
+                            dateInit={actualRequest.date_init}
+                            initiateur={actualRequest.employer_initiateur}
+                            motif={motifs.find(motif => motif.uuid === actualRequest.motif)?.nom}
+                            description={actualRequest.description}
+                        />
                     </div>
                 </div>
-            </Drawer>
-        </div>
-    </>
+                <span className="h-full w-[1px] bg-gray-200"></span>
+                
+                {/* List and Forms section */}
+                <div className="h-full w-1/2 overflow-y-auto hover:overflow-y-scroll p-2 space-y-2">
+
+                    {/* Reponse collapse */}
+                    <CollapsibleComponent 
+                    title={`Toutes les réponses (${actualRequest?.reponse?.length})`} 
+                    className="m-y-2"
+                    >
+                        {actualRequest?.reponse?.map((data)=>
+                                (
+                                    <DetailCard
+                                        borderColor={`border-l-blue-500 my-1`}
+                                        name={data.id_employe}
+                                        description={data.commentaire_reponse}
+                                        date={data.date_init}
+                                    /> 
+                                )
+                            )
+                        }
+                    </CollapsibleComponent>
+                    <div>
+                        {
+                            reponseFormIsOpenned && 
+                            <ReponseForm 
+                                onSave={handleOnReponseSaved}
+                                demande={actualRequest.uuid}
+                            />
+                        }
+                    </div>
+                    <div className="flex justify-end items-center space-x-2 mt-2">
+                        {
+                            reponseFormIsOpenned?
+                                <button className="px-2 py-1 bg-red-500 text-xs text-white rounded-md" onClick={()=>setReponseFormIsOpenned(false)}>Annuler</button>
+                            :
+                                <button className="px-2 py-1 bg-blue-500 text-xs text-white rounded-md" onClick={()=>setReponseFormIsOpenned(true)}>Repondre</button>
+                        }
+                    </div>
+
+                    {/* Toutes les interpélations */}
+                    <CollapsibleComponent 
+                    title={`Toutes les interpélations (${actualRequest?.temoins?.length})`} 
+                    className="m-y-2"
+                    >
+                        {actualRequest?.temions?.map((data)=>
+                                (
+                                    <DetailCard
+                                        borderColor={`border-l-yellow-500 my-1`}
+                                        name={data.id_employe}
+                                        description={data.commentaire_reponse}
+                                        date={data.date_init}
+                                    /> 
+                                )
+                            )
+                        }
+                        
+                    </CollapsibleComponent>
+                    <div>
+                        {
+                            temoinFormIsOpenned && 
+                            <TemoinsForm 
+                                temoins={receivers}
+                                selectedOption={setSelectedOptions}
+                                onSubmit={handleChooseWitness}
+                                onChange={handleChange}
+                            />
+                        }
+                    </div>
+                    <div className="flex justify-end items-center space-x-2 mt-2">
+                        {
+                            temoinFormIsOpenned?
+                                <button className="px-2 py-1 bg-red-500 text-xs text-white rounded-md" onClick={()=>setTemoinFormIsOpenned(false)}>Annuler</button>
+                            :
+                                <button className="px-2 py-1 bg-blue-500 text-xs text-white rounded-md" onClick={()=>setTemoinFormIsOpenned(true)}>Interpeler un témoin</button>
+                        }
+                    </div>
+
+                    {/* Toutes les sanctions */}
+                    <CollapsibleComponent 
+                    title={`Toutes les sanctions (${actualRequest?.propositions?.length})`} 
+                    className="m-y-2"
+                    >
+                        {actualRequest?.propositions?.map((data)=>
+                                (
+                                    <DetailCard
+                                        borderColor={`border-l-yellow-500 my-1`}
+                                        name={data.id_employe}
+                                        description={data.commentaire_reponse}
+                                        date={data.date_init}
+                                    /> 
+                                )
+                            )
+                        }
+                    </CollapsibleComponent>
+                    {showSanctionButton && <SanctionForm 
+                        sanctions={sanctions}
+                        explanation={actualRequest.uuid}
+                        employee={JSON.parse(_USER).id}
+                        onSubmit={handleProposeSanction}
+                    />}
+                    <div className="flex justify-end items-center">
+                        {
+                        showSanctionButton?
+                            <button className="px-2 py-1 bg-red-500 text-xs text-white rounded-md" onClick={handleShowSanctionForm}>Annuler</button>
+                                :
+                            <button className="px-2 py-1 bg-blue-500 text-xs text-white rounded-md" onClick={handleShowSanctionForm}>Proposer une sanction</button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </Drawer>
+    </div>
   )
 }
 

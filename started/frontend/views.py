@@ -137,11 +137,13 @@ def user(request):
     }
     conn.request("GET", "/users/account/", payload, headers)
     response = conn.getresponse()
-    data = json.loads(response.read())
-    data['access'] = request.user.profil.access
     if response.status == 401:
         logout(request=request)
         return JsonResponse({"status": 401}, 401)
+    else:
+        data = json.loads(response.read())
+        data['access'] = request.user.profil.access
+    
     return JsonResponse(data, status=response.status)
 
 

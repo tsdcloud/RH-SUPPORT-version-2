@@ -8,14 +8,14 @@ function ExplicationDetails(props) {
             {/*  */}
             <div className="flex justify-between items-center">
                 <div className="">
-                    <span className="font-bold">No Ref :</span>
+                    <p className="font-bold">No Ref :</p>
                     <div className="p-2 bg-gray-100 border-[1px] rounded-lg">
                         {/* <p className="text-gray-800 text-md">{actualRequest.code_de}</p> */}
                         <p className="text-gray-800 text-md">{props.code}</p>
                     </div>
                 </div>
                 <div className="">
-                    <span className="font-bold">Date d'initiation :</span>
+                    <p className="font-bold">Date d'initiation :</p>
                     <div className="p-2 bg-gray-100 border-[1px] rounded-lg">
                         <p className="text-gray-800 text-md">{props.dateInit}</p>
                         {/* <p className="text-gray-800 text-md">{actualRequest.date_init}</p> */}
@@ -26,7 +26,7 @@ function ExplicationDetails(props) {
 
             {/*  */}
             <div className="my-3">
-                <span className="font-bold">Initiateur :</span>
+                <p className="font-bold">Initiateur :</p>
                 <div className="p-2 bg-gray-100 border-[1px] rounded-lg">
                     <p className="text-gray-800 text-md">{props.initiateur}</p>
                     {/* <p className="text-gray-800 text-md">{actualRequest.employer_initiateur}</p> */}
@@ -34,7 +34,7 @@ function ExplicationDetails(props) {
             </div>
             {/*  */}
             <div className="my-3">
-                <span className="font-bold">Motifs :</span>
+                <p className="font-bold">Motifs :</p>
                 <div className="p-2 bg-gray-100 border-[1px] rounded-lg">
                     <p className="text-gray-800 text-md">{props.motif}</p>
                     {/* <p className="text-gray-800 text-md">{motifs.find(motif => motif.uuid === actualRequest.motif)?.nom}</p> */}
@@ -42,7 +42,7 @@ function ExplicationDetails(props) {
             </div>
             {/*  */}
             <div className="space-y-2 items-center">
-                <span className="font-bold">Description :</span>
+                <p className="font-bold">Description :</p>
                 <div className="p-2 bg-gray-100 border-[1px] rounded-lg">
                     <p className="text-gray-800 text-md">{props.description}</p>
                     {/* <p className="text-gray-800 text-md">{actualRequest.description}</p> */}
@@ -52,7 +52,7 @@ function ExplicationDetails(props) {
             {/* Files */}
             <div>
                 <div className="space-y-2 items-center">
-                    <span className="font-bold">Fichier(s) :</span>
+                    <p className="font-bold">Fichier(s) :</p>
                     <div className="p-2 rounded-lg flex space-x-2 flex-wrap">
                         {/* <p className="text-gray-800 text-md">{actualRequest.description}</p> */}
                         {

@@ -1,8 +1,8 @@
-import React, { Component, useContext, useEffect } from "react";
-import { ConfigProvider } from 'antd'
+import React, { useContext, useEffect } from "react";
 import './index.css'
 import { render } from "react-dom";
 import {BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import axios from "axios";
 
 import ProfileBar from "./profileBar/ProfileBar";
 import DemandeExplication from "../pages/DemandeExplication/DemandeExplication";
@@ -14,12 +14,59 @@ import Archives from "../pages/Archives/Archives.jsx";
 
 
 export default function App() {
-  // const { entities } = useContext(AUTHCONTEXT);
+  const {
+    user, setUser,
+    entities, setEntities,
+    permissions, setPermissions
+  } = useContext(AUTHCONTEXT);
+
+
   useEffect(()=>{
-    // console.log(entities);
-  }, [])
+
+    const getEntity = async (token) => {
+      let config = {
+        method: "get",
+        maxBodyLength: Infinity,
+        url: "/api?end=entity&detail=0&termination=firm&action=",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
+      const response = await axios.request(config);
+      const data = await response.data;
+      if(data.status === 200){
+        return data;
+      }
+      return null;
+    };
+
+    const getInfoUser = async ()=>{
+      const request = new Request('/user',{
+        method : "GET"
+      })
+      let response = await fetch(request)
+      let data = await response.json();
+      const entity = await getEntity(data.access);
+  
+      if(response.status == 200){
+        const userProfile = await {...data};
+        localStorage.setItem('entities', JSON.stringify(entity.results));
+        // const userProfile = {...data, entity: entity.results};
+        console.log(entity.results);
+        // setUserInfo(localStorage.setItem('user', JSON.stringify(userProfile)));
+        setUser(userProfile);
+        setEntities(entity.results);
+      }else{
+        window.location.href = "/logout"
+      }
+    }
+
+    getInfoUser();
+
+  }, []);
 
   return (
+    
       <Router>
         <TopBar />
         <ProfileBar />
@@ -31,7 +78,6 @@ export default function App() {
           <Route path="archives" element={<Archives />} />
         </Routes>
       </Router>
-    // <h5>Something</h5>
   )
 }
 
