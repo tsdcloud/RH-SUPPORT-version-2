@@ -19,9 +19,9 @@ from frontend.models import Profil
 
 # Create your views here.
 def index(request, *args, **kwargs):
-    if request.user.is_authenticated:
-        return redirect(reverse('frontend_dashboard'))
-    return render(request, 'frontend/login.html')
+    # if request.user.is_authenticated:
+    #     return redirect(reverse('frontend_dashboard'))
+    return render(request, 'frontend/index.html')
 
 def fix_link(link):
     # Define a regular expression pattern to match more than one consecutive "/"
@@ -54,7 +54,7 @@ def connect(email: str, password: str):
         data = response.text
     return data
 
-
+@csrf_exempt
 def f_login(request):
     if request.method == 'GET':
         return redirect(reverse('frontend_index'))
@@ -127,8 +127,8 @@ def d_logout(request):
     #logout(request=request)
     return render(request, 'frontend/login.html')
 
-
-@login_required(login_url='/')
+@csrf_exempt
+# @login_required(login_url='/')
 def user(request):
     conn = http.client.HTTPSConnection(ENDPOINT_USER)
     payload = ''
@@ -153,7 +153,7 @@ def dashboard(request):
     return render(request, 'frontend/index.html')
 
 
-@login_required(login_url='/')
+# @login_required(login_url='/')
 @csrf_exempt
 def api(request):
     data = {"status": 400}

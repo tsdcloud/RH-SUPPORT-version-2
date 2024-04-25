@@ -9,15 +9,13 @@ export default function AuthProvider({children}){
 
   const [user, setUser] = useState('');
   const [entities, setEntities] = useState([]);
-  const [activeEntity, setActiveEntity] = useState({});
-
-
-  
+  const [defaultProfile, setDefault] = useState({});
 
   return (
     <AUTHCONTEXT.Provider value={{
       user, setUser,
-      entities, setEntities
+      entities, setEntities,
+      defaultProfile, setDefault
     }}>
       {children}
     </AUTHCONTEXT.Provider>

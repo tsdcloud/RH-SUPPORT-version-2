@@ -33,6 +33,41 @@ export const useFetch=()=>{
 
     };
 
+    const postData = async (url, data={}, withAuth=true) => {
+      setError(null);
+
+      let headersList = {
+        "Accept": "*/*",
+        "Authorization": (withAuth ? "Bearer "+JSON.parse(localStorage.getItem("user")) : "")
+      }
+      console.log({
+        method: "POST",
+          headers: headersList,
+          body: JSON.stringify({
+            ...data
+          })
+      })
+      try {
+        const response = await fetch(url, {
+          method: "GET",
+          headers: headersList,
+          body: JSON.stringify({
+            ...data
+          })
+        });
+        console.log(response);
+        if(response.status === 200){
+          let result = await response.json();
+          let data = await result?.results;
+          return data;
+        }
+      } catch (error) {
+        setError(error);
+      } finally {
+      }
+
+    };
+
 
     // useEffect(() => {
     //   const fetchData = async () => {
@@ -54,5 +89,5 @@ export const useFetch=()=>{
     //   fetchData();
     // }, [url]);
   
-    return { isLoading, error, fetchData };
+    return { isLoading, error, fetchData, postData };
 }
