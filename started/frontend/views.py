@@ -19,8 +19,6 @@ from frontend.models import Profil
 
 # Create your views here.
 def index(request, *args, **kwargs):
-    # if request.user.is_authenticated:
-    #     return redirect(reverse('frontend_dashboard'))
     return render(request, 'frontend/index.html')
 
 def fix_link(link):
@@ -29,7 +27,6 @@ def fix_link(link):
     
     # Use re.sub to replace consecutive "/" with a single "/"
     fixed_link = re.sub(pattern, '/', link)
-    
     return fixed_link
 
 def connect(email: str, password: str):
@@ -51,84 +48,68 @@ def connect(email: str, password: str):
             data = json.loads(e)
     except:
         response = requests.request("POST", ENDPOINT_USER + 'api/token/', headers=headers, data=payload)
-        data = response.text
+        data = response
     return data
 
 @csrf_exempt
 def f_login(request):
+    payload = json.loads(request.body)
     if request.method == 'GET':
         return redirect(reverse('frontend_index'))
     else:
-        form = LoginForm(request.POST)
+        form = LoginForm(payload)
         if form.is_valid():
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
-            # next = form.cleaned_data.get('next', None)
-            # if not next:
-            #     next = request.data.get('next', None)
             res = connect(email=email, password=password)
-            if res.get('detail', 0) != 0:
-                messages.error(request, res['detail'])
-                return render(
-                    request,
-                    'frontend/login.html',
-                    {'form': form}
+            try:
+                user = User.objects.get(username=email)
+            except User.DoesNotExist:
+                user = User.objects.create_user(
+                    username=email,
+                    password=password
                 )
+
+            if not hasattr(user, 'profil') :
+                profil = Profil()
+                profil.access = "e"
+                profil.refresh = "e"
+                profil.user = user
+                profil.save()
+
+            user.profil.access = res["access"]
+            user.profil.refresh = res['refresh']
+            user.profil.save()
+
+            if user.is_active:
+                user = authenticate(
+                    request,
+                    username=email,
+                    password=password
+                )
+                login(request, user)
+                print("RESULT:", res)
+                return JsonResponse(data=res, status=200)
+                # return res
             else:
-                request.infoUser = res
-                try:
-                    user = User.objects.get(username=email)
-                except User.DoesNotExist:
-                    user = User.objects.create_user(
-                        username=email,
-                        password=password
-                    )
-
-                if not hasattr(user, 'profil') :
-                    profil = Profil()
-                    profil.access = "e"
-                    profil.refresh = "e"
-                    profil.user = user
-                    profil.save()
-
-                user.profil.access = res["access"]
-                user.profil.refresh = res['refresh']
-                user.profil.save()
-
-                if user.is_active:
-                    user = authenticate(
-                        request,
-                        username=email,
-                        password=password
-                    )
-                    login(request, user)
-                    return redirect(reverse('frontend_dashboard'))
-                else:
-                    messages.warning(request, 'Compte suspendu')
-                    return render(
-                        request,
-                        'frontend/login.html',
-                        {'form': form}
-                    )
+                messages.warning(request, 'Compte suspendu')
+                return JsonResponse(data={"detail":"Compte suspendu"}, status=403)
+            # if res.get('detail', 0) != 0:
+            #     return None
+            # else:
         else:
             messages.error(
                 request,
                 "Veuillez compléter le formulaire ci-dessus"
             )
-            return render(
-                request,
-                'frontend/login.html',
-                {'form': form}
-            )
+            return JsonResponse(data={"detail":"Veuillez compléter le formulaire ci-dessus"}, status=401)
 
 
 @login_required(login_url='/')
 def d_logout(request):
-    #logout(request=request)
     return render(request, 'frontend/login.html')
 
 @csrf_exempt
-# @login_required(login_url='/')
 def user(request):
     conn = http.client.HTTPSConnection(ENDPOINT_USER)
     payload = ''
@@ -149,7 +130,6 @@ def user(request):
 
 @login_required(login_url='/')
 def dashboard(request):
-    # logout(request=request)
     return render(request, 'frontend/index.html')
 
 

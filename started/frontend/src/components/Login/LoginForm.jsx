@@ -41,9 +41,15 @@ function LoginForm(props) {
         }
         
         const data = JSON.stringify({
-            "username": username,
+            "email": username,
             "password": password
         });
+
+        console.log({
+            method: "POST",
+            headers: headersList,
+            body: data
+        })
 
         try {
             const response = await fetch('/login', {
@@ -51,16 +57,8 @@ function LoginForm(props) {
                 headers: headersList,
                 body: data
             });
-            console.log(response);
-
-            // if(response.status === 200){
-            //     let result = await response.json();
-            //     console.log(result);
-            //     // let data = await result?.results;
-            //     // return data;
-            // }
-            // const loginResponse = await postData("/api", data, false);
-            // console.log(loginResponse);
+            const result = response.json();
+            console.log(result);
         } catch (error) {
             console.error(error);
         }
@@ -83,12 +81,12 @@ function LoginForm(props) {
             </div>
             <div className='flex flex-col w-1/2 mt-2'>
                 <label htmlFor="" className='text-sm'>Nom d'utilisateur <span className='text-red-500'>*</span> :</label>
-                <input type="text" className='text-sm outline-0 border-[1px] border-gray-400 rounded-md' placeholder='' onChange={e=>setUsername(e.target.value)}/>
+                <input type="text" value={username} className='text-sm outline-0 border-[1px] border-gray-400 rounded-md' placeholder='' onChange={e=>setUsername(e.target.value)}/>
                 <small className='text-red-500'>{usernameErr}</small>
             </div>
             <div className='flex flex-col w-1/2'>
                 <label htmlFor="" className='text-sm'>Mot de passe <span className='text-red-500'>*</span> :</label>
-                <input type="Password" className='text-sm outline-0 border-[1px] border-gray-400 rounded-md' placeholder='' onChange={e=>setPassword(e.target.value)}/>
+                <input type="Password" value={password} className='text-sm outline-0 border-[1px] border-gray-400 rounded-md' placeholder='' onChange={e=>setPassword(e.target.value)}/>
                 <small className='text-red-500'>{passwordErr}</small>
             </div>
             <div className='flex flex-col w-1/2'>
