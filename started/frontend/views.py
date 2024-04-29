@@ -1,6 +1,6 @@
 import http.client
 import json
-
+import asyncio
 import requests
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -29,12 +29,110 @@ def fix_link(link):
     fixed_link = re.sub(pattern, '/', link)
     return fixed_link
 
+
+def get_profile(token:str, id:str):
+      """
+        Fetches employee data from the Entity, the API uses the provided token.
+
+        Args:
+            token: The authentication token for the API.
+
+        Returns:
+            The entity data dictionary on success (status code 200), 
+            or None on failure.
+      """
+        
+      url = "https://"+ENDPOINT_ENTITY+"/firm/"+id+"/employee/" 
+      headers = {"Authorization": f"Bearer {token}"}
+
+      try:
+         response = requests.get(url, headers=headers)
+         response.raise_for_status()
+         return response.json()
+      except requests.exceptions.RequestException as e:
+         print(f"Error fetching employee data: {e}")
+         return None
+
+@csrf_exempt
+def get_entity(request):
+  """
+  Fetches entity data from the API using the provided token.
+
+  Args:
+      token: The authentication token for the API.
+
+  Returns:
+      The entity data dictionary on success (status code 200), 
+      or None on failure.
+  """
+#   url = "http://your-api-domain/api?end=entity&detail=0&termination=firm&action="
+  profil = []
+  url = "https://"+ENDPOINT_ENTITY+"/firm/"
+  headers = {
+        "Authorization": 'Bearer ' + request.user.profil.access,
+        'Content-type': 'application/json',
+        'Accept': 'application/json'
+    }
+
+  try:
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    if response.status_code == 200:
+        return JsonResponse(data=response.json(), status=200)
+    else:
+        return JsonResponse(data={"message": "something wrong happen"}, status=401)
+    # return response.json()
+  except requests.exceptions.RequestException as e:
+    print(f"Error fetching entity data: {e}")
+    return JsonResponse(data={"message": "something wrong happen"}, status=401)
+  
+
+def get_info_user(token:str):
+  """
+  Fetches user information and entity data, stores user data in localStorage.
+
+  Raises:
+      RuntimeError: If the user data fetch fails with a non-200 status code.
+  """
+  profiles = []
+  url = "https://"+ENDPOINT_USER+"/users/account/"  # Replace with your API domain
+  headers = {"Authorization": f"Bearer {token}"}
+  try:
+    response = requests.get(url, headers=headers)
+    #response.raise_for_status()  # Raise exception for non-200 status codes
+    data = response.json()
+    entities = get_entity(token)  # Use get to handle missing key
+    print(entities.get("results"))
+    # for entity in entities:
+    #     profile = get_profile(id=entity.id, token=token)
+    #     profiles.append(profile, None)
+    for entity in entities.get("results"):
+        profile = get_profile(id=entity.get("id"), token=token)
+        profiles.append(profile)
+        # print(entity["id"])
+        print(entity.get("id"))
+
+    # entity = get_entity(data.get("access"))  # Use get to handle missing key
+    if response.status_code == 200:
+      user_profile = {**data, "entity": entities.get("results", [])}  # Use get for missing key
+      return user_profile
+    else:
+      raise RuntimeError("Failed to fetch user info (non-200 status)")
+  except requests.exceptions.RequestException as e:
+    print(f"Error fetching user info: {e}")
+    raise RuntimeError("Failed to fetch user info") from e
+
 def connect(email: str, password: str):
-    headers = {'Content-Type': 'application/json'}
+
+    headers = {
+        'Content-Type': 'application/json'
+    }
+
     payload = {
         "username": email,
         "password": password
     }
+
     try:
         conn = http.client.HTTPSConnection(ENDPOINT_USER)
         payload = json.dumps(payload)
@@ -62,6 +160,8 @@ def f_login(request):
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
             res = connect(email=email, password=password)
+            user_info = get_info_user(res['access'])
+
             try:
                 user = User.objects.get(username=email)
             except User.DoesNotExist:
@@ -87,16 +187,13 @@ def f_login(request):
                     username=email,
                     password=password
                 )
+
                 login(request, user)
-                print("RESULT:", res)
-                return JsonResponse(data=res, status=200)
-                # return res
+                return JsonResponse(data=user_info, status=200)
+                
             else:
                 messages.warning(request, 'Compte suspendu')
                 return JsonResponse(data={"detail":"Compte suspendu"}, status=403)
-            # if res.get('detail', 0) != 0:
-            #     return None
-            # else:
         else:
             messages.error(
                 request,
@@ -107,7 +204,7 @@ def f_login(request):
 
 @login_required(login_url='/')
 def d_logout(request):
-    return render(request, 'frontend/login.html')
+    return render(request, 'frontend/index.html')
 
 @csrf_exempt
 def user(request):
@@ -127,11 +224,9 @@ def user(request):
     
     return JsonResponse(data, status=response.status)
 
-
 @login_required(login_url='/')
 def dashboard(request):
     return render(request, 'frontend/index.html')
-
 
 # @login_required(login_url='/')
 @csrf_exempt

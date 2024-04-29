@@ -12,6 +12,7 @@ import { AUTHCONTEXT } from "../context/AuthContext";
 import Sanctions from "../pages/Sanctions/Sanctions.jsx";
 import Archives from "../pages/Archives/Archives.jsx";
 import LoginForm from "./Login/LoginForm.jsx";
+import Entity from "../pages/Entities/Entity.jsx";
 
 
 export default function App() {
@@ -22,14 +23,13 @@ export default function App() {
   }
 
   useEffect(()=>{
-
+    console.log(user);
   }, []);
 
   return (
-
       <Router>
         {
-          (user && defaultProfile) ?
+          (user) ?
           <>
             <TopBar />
             <ProfileBar />
@@ -40,16 +40,13 @@ export default function App() {
               <Route path="sanction" element={<Sanctions />} />
               <Route path="archives" element={<Archives />} />
             </Routes>
-          </>:
-          (!defaultProfile) ?
+          </>
+          :
           <>
-            Default Profile
-          </>:
-          (!user) &&
-          <>
-            <LoginForm 
+            {/* <LoginForm 
               onLogin={onLogin}
-            />
+            /> */}
+            <Entity />
           </>          
         }
       </Router>

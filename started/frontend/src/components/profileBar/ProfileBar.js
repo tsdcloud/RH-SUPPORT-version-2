@@ -48,8 +48,8 @@ function ProfileBar() {
           <Tab 
             title=" Tableau de bord" 
             id="default-tab" 
-            tabRef={dashboardTabRef} to="/dashboard" 
-            onClick={() => handleTabClick("dashboard")} 
+            tabRef={dashboardTabRef} to="/" 
+            onClick={() => handleTabClick("")} 
             className={`bg-white px-4 text-gray-800 font-semibold py-2 rounded-t border-t border-r border-l -mb-px ${
               path === 'dashboard' ? 'border-t border-r border-l -mb-px bg-white' : 'bg-gray-500 border-b'
             }`}

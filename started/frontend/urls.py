@@ -7,6 +7,7 @@ urlpatterns = [
     path('dashboard', views.dashboard, name='frontend_dashboard'),
     path('logout', views.d_logout, name='frontend_logout'),
     path('user', views.user, name='frontend_user'),
+    path('entities', views.get_entity, name='frontend_entities'),
     re_path(r'^api', views.api, name='api'),
     re_path(r'^.*', views.dashboard),
 ]

@@ -1,9 +1,11 @@
-import React, {useState, useEffect, useRef} from 'react'
+import React, {useState, useEffect, useRef, useContext} from 'react'
+import { AUTHCONTEXT } from '../../context/AuthContext';
 import { Link } from 'react-router-dom'
 import herobg from '../../assets/images/herobg.jpg'
 import { useFetch } from '../../hooks/useFetch';
 function LoginForm(props) {
 
+    const { user, setUser, entities, setEntities, defaultProfile, setDefault } = useContext(AUTHCONTEXT)
     const { isLoading, error, fetchData, postData } = useFetch();
     const [username, setUsername] = useState('');
     const [usernameErr, setUsernameErr] = useState('');
@@ -57,7 +59,8 @@ function LoginForm(props) {
                 headers: headersList,
                 body: data
             });
-            const result = response.json();
+            const result = await response.json();
+            setUser(result);
             console.log(result);
         } catch (error) {
             console.error(error);
@@ -93,7 +96,7 @@ function LoginForm(props) {
                 <Link className='text-xs underline text-red-500' >Mot de passe oublier ?</Link>
             </div>
             <div className='w-1/2 flex justify-end'>
-                <button className={`${isSubmitting ?"disabled bg-blue-300":""} btn btn-primary`} onClick={handleLogin}>{isSubmitting?"Connexion en cours":"Se connecter"}</button>
+                <button className={`${isSubmitting ?"disabled bg-blue-300":""} btn btn-primary`} onClick={handleLogin}>{isSubmitting ? "Connexion en cours..." : "Se connecter"}</button>
             </div>
         </form>
     </div>
